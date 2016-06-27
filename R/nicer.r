@@ -15,7 +15,7 @@
     .Primitive("%%")(e1, e2)
   }
 }
- 
+
 #' @export
 dict <- function(...) {
   data <- list(...)
@@ -88,7 +88,7 @@ as.dict <- function(obj) {
 #' @export
 `$.dict` <- function(dict, key, orElse=attr(dict, 'default')) {
   if (is.character(key)) {
-    v <- unclass(dict)[[key]] %||% orElse
+    v <- NextMethod() %||% orElse
     if (is.null(v) && ! is.null(attr(dict, 'strict'))) {
       stop('Attempted access of non-existing key', key)
     } else {
@@ -116,14 +116,32 @@ as.list.dict <- function(dict) {
 }
 
 #' @export
-`$<-.dict` <- function(dict, name, value) {
-  if (!is.character(name)) {
+`$<-.dict` <- function(dict, key, value) {
+  if (!is.character(key)) {
     stop('Only character keys allowed.')
   }
-  dict <- unclass(dict)
-  dict[[name]] <- value
-  class(dict) <- c('dict', 'list')
-  dict
+
+  keys <- keys(dict)
+  
+  if (! is.null(value)) {
+    return(NextMethod())
+  } else {
+    if (! key %in% keys) {
+      keys <- c(keys, key)    
+      dict <- c(dict, list(NULL))
+    } else {
+      idx <- which(key == keys)
+      kidx <- seq_along(keys)
+      dict <- values(dict)
+      
+      dict <- c(dict[kidx < idx],
+               list(NULL),
+               dict[kidx > idx])      
+    }
+    names(dict) <- keys
+    class(dict) <- c('dict', 'list')
+    dict
+  }
 }
 
 #' @export
@@ -160,6 +178,10 @@ omit <- function(dict, ...) {
 
 #' @export
 extend <- function(dict, ...) {
+  UseMethod('extend', dict)
+}
+
+extend.dict <- function(dict, ...) {
   dots <- list(...)
   if (length(dots) == 0)
     return(dict)
@@ -183,10 +205,7 @@ keys <- function(object) {
 }
 
 #' @export
-`keys<-` <- function(object, value) {
-  names(object) <- unique(value)
-  object
-}
+`keys<-` <- `names<-`
 
 #' @export
 values <- function(dict) {
@@ -208,9 +227,6 @@ entries <- function(dict) {
   attr(dict, 'names') <- unique(value)
   dict
 }
-
-#' @export
-`keys<-` <- `names<-`
 
 #' @export
 entry <- function(key, value) {
@@ -329,3 +345,187 @@ has <- function(dict, key) {
   key %in% keys(dict)
 }
 
+.defaults <- dict(
+  integer = 0L,
+  logical = FALSE,
+  numeric = 0,
+  list = list(),
+  dict = dict(),
+  character = '',
+  complex = complex(1),
+  any = NULL
+)
+
+type_check <- function(val, type, name, struct) {
+  if (is_formula(type)) {
+    struct <- unclass(struct)
+    struct[[name]] <- val
+
+    constraint_satisfied <- tryCatch(f_eval_rhs(type, struct), error=function(...) FALSE)
+
+    if (! isTRUE(constraint_satisfied)) {
+      stop('Field "', name, '" does not satisfy constraint: ', as.character(f_rhs(type))[-1])
+    } else
+      return(TRUE)    
+  } else {
+    if (length(type == 1) && type == 'any')
+      return(TRUE)
+    else if (is.null(val))
+      stop('Field "', name, '" needs to be specified; you passed NULL or nothing instead.')
+    else if (type[1] == 'either')
+      type <- type[-1]
+    
+    if (!inherits(val, type))
+      stop('Attempted to set field "', name, '" with value of type ', str_c(class(val), collapse=', '),
+           ', expected: ', str_c(type, collapse=', '))
+    else
+      return(TRUE)
+  }
+}
+
+
+#' @export
+struct <- function(.name, ...) {
+  if (! is.character(.name)) {
+    stop("Specify the name of the struct")
+  }
+  
+  pars <- list(...)
+  if (length(pars) == 0)
+    stop('No fields specified.')
+  
+  names <- names(pars)
+  if (is.null(names))
+    names <- rep('', length(pars))
+
+  template <- dict()
+  types <- dict()
+  
+  for (i in seq_along(pars)) {
+    if (names[i] == '' && !is_formula(pars[[i]]))
+      stop("Arguments should either specify a default value (e.g. 'x = 0') or a type (e.g. 'x ~ integer')")
+
+    if (names[i] == '') {
+      # Argument is specified as name ~ class, e.g. x ~ integer
+      f <- pars[[i]]
+      type <- as.character(f_rhs(f))
+      name <- as.character(f_lhs(f))
+
+      names[i] <- name
+      types[[names[i]]] <- type
+      template[[names[i]]] <- NULL
+      
+    } else if (is_formula(pars[[i]])) {
+      # Both class and default values are specified as name = default ~ class, e.g. x = 0 ~ integer
+      f <- pars[[i]]
+      types[[names[i]]] <- as.character(f_rhs(f))      
+      template[[names[i]]] <- f_eval_lhs(f)
+    } else {
+      # Only default is passed, e.g. x = 0
+      types[[names[i]]] <- class(pars[[i]])
+      template[[names[i]]] <- pars[[i]]
+    }
+
+    if (types[[names[i]]][1] == '{')
+      types[[names[i]]] <- pars[[i]]
+  }
+
+  for (k in keys(template)) {
+    if (!is.null(template[[k]]))
+      type_check(template[[k]], types[[k]], k, template)
+  }
+
+  struct_new <- function_new(template, quote({
+    # Creates a new struct.
+    .struct <- template
+
+    for (k in keys(template)) {
+      .struct[[k]] <- get(k)
+    }
+    
+    attr(.struct, 'types') <- types
+    class(.struct) <- c(.name, 'struct', class(.struct))
+
+    for (k in keys(.struct))
+      type_check(.struct[[k]], types[[k]], k, .struct)
+    .struct
+  }))
+
+  attr(struct_new, 'struct_name') <- .name
+  attr(struct_new, 'types') <- types
+  class(struct_new) <- c('struct_new', 'function')
+  struct_new
+}
+
+#' @export
+is.struct <- function(struct) {
+  inherits(struct, 'struct') && !is.null(attr(struct, 'types'))
+}
+
+#' @export
+print.struct <- function(struct) {
+  class <- class(struct)
+  types <- attr(struct, 'types')
+  cat('Struct of class ', class[1], '\n')
+  print.dict(struct)
+}
+
+#' @export
+print.struct_new <- function(f) {
+  describe(f)
+}
+
+#' @export
+describe <- function(struct) {
+  if (is.function(struct))
+    class <- attr(struct, 'struct_name')
+  else
+    class <- class(struct)[1]
+
+  types <- attr(struct, 'types')
+  
+  cat('Definition of struct of class:', class, '\n')
+  cat('\nFields:\n')
+  for (k in keys(types)) {
+    type <- types[[k]]
+    if (is_formula(types[[k]]))
+      type <- as.character(f_rhs(type))[-1]
+
+    cat('$', k, ' ~ ', type, '\n')
+  }
+}
+
+#' @export
+`$<-.struct` <- function(struct, key, value) {
+  if (!is.character(key))
+    stop('Key should be a character value.')
+  if (!is.struct(struct))
+    stop('Malformed struct.')
+  if (! key %in% keys(struct))
+    stop('Field "', key, '" does not exist in the definition of struct ', class(struct)[1])
+  types <- attr(struct, 'types')
+  type_check(value, types[[key]], key, struct)
+  NextMethod()
+}
+
+`[[<-.struct` <- `$<-.struct`
+
+#' @export
+`[<-.struct` <- function(struct, keys, values) {
+  if (!is.struct(struct))
+    stop('Malformed struct.')
+
+  if (length(setdiff(keys, keys(struct))) != 0)
+    stop('Unknown fields specified: ', str_c(setdiff(keys, keys(struct)), sep=', '))
+
+  class <- class(struct)
+  class(struct) <- 'dict'
+  struct[keys] <- values
+  class(struct) <- class
+  
+  types <- attr(struct, 'types')
+  for (k in keys(struct))
+    type_check(struct[[k]], types[[k]], k, struct)
+
+  struct
+}
