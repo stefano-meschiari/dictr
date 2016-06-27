@@ -174,7 +174,11 @@ Typed structures (structs)
 
 A `struct` object is similar to a `dict` object. An important difference is that it can specify type constraints (or arbitrary constraints) that will be enforced at runtime.
 
-A `struct` is useful for: - when you need a strictly typed value object; - when you want to concisely define a function with strictly typed parameters; - when you want to concisely specify constraints on the fields of an object.
+A `struct` is useful for:
+
+-   when you need to impose types on values;
+-   when you want to concisely define a function with strictly typed parameters;
+-   when you want to concisely specify constraints on the fields of an object.
 
 Creating structs
 ----------------
@@ -326,7 +330,7 @@ The `%%` operator can be used in place of `sprintf`. The right operand should be
 print('New random number: %.2f' %% runif(1))
 ```
 
-    ## [1] "New random number: 0.33"
+    ## [1] "New random number: 0.97"
 
 ``` r
 name <- 'Stefano'
