@@ -86,9 +86,9 @@ as.dict <- function(obj) {
 }
 
 #' @export
-`$.dict` <- function(dict, key, orElse=attr(dict, 'default')) {
+`[[.dict` <- function(dict, key, orElse=attr(dict, 'default')) {
   if (is.character(key)) {
-    v <- NextMethod() %||% orElse
+    v <- unclass(dict)[[key]] %||% orElse
     if (is.null(v) && ! is.null(attr(dict, 'strict'))) {
       stop('Attempted access of non-existing key', key)
     } else {
@@ -100,7 +100,7 @@ as.dict <- function(obj) {
 }
 
 #' @export
-`[[.dict` <- `$.dict`
+`$.dict` <- `[[.dict`
 
 as.list.dict <- function(dict) {
   unclass(dict)
@@ -124,7 +124,10 @@ as.list.dict <- function(dict) {
   keys <- keys(dict)
 
   if (! is.null(value)) {
-    return(NextMethod())
+    dict <- unclass(dict)
+    dict[[key]] <- value
+    class(dict) <- c('dict', 'list')
+    return(dict)
   } else {
     if (! key %in% keys) {
       keys <- c(keys, key)
