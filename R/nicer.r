@@ -122,21 +122,21 @@ as.list.dict <- function(dict) {
   }
 
   keys <- keys(dict)
-  
+
   if (! is.null(value)) {
     return(NextMethod())
   } else {
     if (! key %in% keys) {
-      keys <- c(keys, key)    
+      keys <- c(keys, key)
       dict <- c(dict, list(NULL))
     } else {
       idx <- which(key == keys)
       kidx <- seq_along(keys)
       dict <- values(dict)
-      
+
       dict <- c(dict[kidx < idx],
                list(NULL),
-               dict[kidx > idx])      
+               dict[kidx > idx])
     }
     names(dict) <- keys
     class(dict) <- c('dict', 'list')
@@ -334,10 +334,10 @@ detect_key <- function(dict, condition, ..., right=FALSE) {
 }
 
 #' @export
-defaults <- function(dict, defaults) {
-  missing_keys <- setdiff(keys(defaults), keys(dict))
-  dict[missing_keys] <- defaults[missing_keys]
-  dict
+defaults <- function(x, defaults) {
+  missing_keys <- setdiff(names(defaults), names(x))
+  x[missing_keys] <- defaults[missing_keys]
+  x
 }
 
 #' @export
@@ -366,7 +366,7 @@ type_check <- function(val, type, name, struct) {
     if (! isTRUE(constraint_satisfied)) {
       stop('Field "', name, '" does not satisfy constraint: ', as.character(f_rhs(type))[-1])
     } else
-      return(TRUE)    
+      return(TRUE)
   } else {
     if (length(type == 1) && type == 'any')
       return(TRUE)
@@ -374,7 +374,7 @@ type_check <- function(val, type, name, struct) {
       stop('Field "', name, '" needs to be specified; you passed NULL or nothing instead.')
     else if (type[1] == 'either')
       type <- type[-1]
-    
+
     if (!inherits(val, type))
       stop('Attempted to set field "', name, '" with value of type ', str_c(class(val), collapse=', '),
            ', expected: ', str_c(type, collapse=', '))
@@ -389,18 +389,18 @@ struct <- function(.name, ...) {
   if (! is.character(.name)) {
     stop("Specify the name of the struct")
   }
-  
+
   pars <- list(...)
   if (length(pars) == 0)
     stop('No fields specified.')
-  
+
   names <- names(pars)
   if (is.null(names))
     names <- rep('', length(pars))
 
   template <- dict()
   types <- dict()
-  
+
   for (i in seq_along(pars)) {
     if (names[i] == '' && !is_formula(pars[[i]]))
       stop("Arguments should either specify a default value (e.g. 'x = 0') or a type (e.g. 'x ~ integer')")
@@ -414,11 +414,11 @@ struct <- function(.name, ...) {
       names[i] <- name
       types[[names[i]]] <- type
       template[[names[i]]] <- NULL
-      
+
     } else if (is_formula(pars[[i]])) {
       # Both class and default values are specified as name = default ~ class, e.g. x = 0 ~ integer
       f <- pars[[i]]
-      types[[names[i]]] <- as.character(f_rhs(f))      
+      types[[names[i]]] <- as.character(f_rhs(f))
       template[[names[i]]] <- f_eval_lhs(f)
     } else {
       # Only default is passed, e.g. x = 0
@@ -442,7 +442,7 @@ struct <- function(.name, ...) {
     for (k in keys(template)) {
       .struct[[k]] <- get(k)
     }
-    
+
     attr(.struct, 'types') <- types
     class(.struct) <- c(.name, 'struct', class(.struct))
 
@@ -483,7 +483,7 @@ describe <- function(struct) {
     class <- class(struct)[1]
 
   types <- attr(struct, 'types')
-  
+
   cat('Definition of struct of class:', class, '\n')
   cat('\nFields:\n')
   for (k in keys(types)) {
@@ -522,7 +522,7 @@ describe <- function(struct) {
   class(struct) <- 'dict'
   struct[keys] <- values
   class(struct) <- class
-  
+
   types <- attr(struct, 'types')
   for (k in keys(struct))
     type_check(struct[[k]], types[[k]], k, struct)

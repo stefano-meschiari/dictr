@@ -3,7 +3,7 @@
 Install the package using [devtools](http://cran.r-%20project.org/package=devtools):
 
 ``` r
-devtools::install_github('stefano-meschiari/nicr')
+devtools::install_github('stefano-meschiari/nicer')
 ```
 
 and import the library with `library`:
@@ -93,7 +93,8 @@ You can use the `mapkv` and `mapkv_dict` to map over keys and values. These func
 
 ``` r
 # Returns a list
-mapkv(d, function(k, v) paste(key, as.character(v)))
+mapkv(d, function(k, v) paste(k, as.character(v)))
+
 # Returns a dict with the same keys and squared values
 d2 <- dict(a=1, b=2, c=3)
 mapkv_dict(d, function(k, v) v^2)
@@ -330,7 +331,7 @@ The `%%` operator can be used in place of `sprintf`. The right operand should be
 print('New random number: %.2f' %% runif(1))
 ```
 
-    ## [1] "New random number: 0.97"
+    ## [1] "New random number: 0.94"
 
 ``` r
 name <- 'Stefano'

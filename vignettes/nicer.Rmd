@@ -8,13 +8,12 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
 `niceR` makes the R language a bit nicer by adding a few conveniences to the base language and a few new convenience functions and data structures. 
 
 Install the package using [devtools](http://cran.r-
 project.org/package=devtools):
 ```{r, eval=FALSE}
-devtools::install_github('stefano-meschiari/nicr')
+devtools::install_github('stefano-meschiari/nicer')
 ```
 and import the library with `library`:
 ```{r, eval=FALSE}
@@ -89,7 +88,8 @@ You can use the `mapkv` and `mapkv_dict` to map over keys and values. These func
 
 ```{r, eval=FALSE}
 # Returns a list
-mapkv(d, function(k, v) paste(key, as.character(v)))
+mapkv(d, function(k, v) paste(k, as.character(v)))
+
 # Returns a dict with the same keys and squared values
 d2 <- dict(a=1, b=2, c=3)
 mapkv_dict(d, function(k, v) v^2)
@@ -152,6 +152,13 @@ tryCatch(letters_to_numbers$notaletter, error=function(e) print(e))
 # Typed structures (structs)
 A `struct` object is similar to a `dict` object. An important difference is that it can specify type constraints (or arbitrary constraints) that will be enforced at runtime.
 
+A `struct` is useful for:
+
+- when you need to impose types on values;
+- when you want to concisely define a function with strictly typed parameters;
+- when you want to concisely specify constraints on the fields of an object.
+
+## Creating structs
 The fields of a new struct can be defined as follows: 
 ```{r}
 # Struct definition
