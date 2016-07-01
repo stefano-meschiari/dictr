@@ -1,25 +1,8 @@
-#' @export
-`+` <- function(e1, e2) {
-  if (is.character(e1) || is.character(e2)) {
-    str_c(e1, e2)
-  } else {
-    .Primitive("+")(e1, e2)
-  }
-}
-
-#' @export
-`%%` <- function(e1, e2) {
-  if (is.character(e1)) {
-    do.call(sprintf, c(e1, as.list(e2)))
-  } else {
-    .Primitive("%%")(e1, e2)
-  }
-}
 
 #' @export
 dict <- function(...) {
   data <- list(...)
-  as.dict(data)
+  as_dict(data)
 }
 
 #' @export
@@ -49,7 +32,7 @@ default <- function(dict) {
 
 #' @export
 make_dict <- function(keys, values, default=NULL, strict=FALSE) {
-  dict <- as.dict(set_names(values, keys))
+  dict <- as_dict(set_names(values, keys))
   attr(dict, 'default') <- default
   if (strict)
     attr(dict, 'strict') <- TRUE
@@ -61,12 +44,12 @@ length.dict <- function(dict) {
 }
 
 #' @export
-is.dict <- function(dict) {
+is_dict <- function(dict) {
   inherits(dict, 'dict')
 }
 
 #' @export
-as.dict <- function(obj) {
+as_dict <- function(obj) {
   if (inherits(obj, 'entries')) {
     names <- map(obj, 'key')
     values <- map(obj, 'value')
@@ -108,7 +91,7 @@ as.list.dict <- function(dict) {
 
 #' @export
 `==.dict` <- function(dict, other) {
-  if (! is.dict(other))
+  if (! is_dict(other))
     return(FALSE)
 
   keys <- union(keys(dict), keys(other))
@@ -188,7 +171,7 @@ extend.dict <- function(dict, ...) {
   names <- names(dots)
   for (i in seq_along(dots)) {
     if (is.list(dots[[i]])) {
-      dots[[i]] <- as.dict(dots[[i]])
+      dots[[i]] <- as_dict(dots[[i]])
       dict[keys(dots[[i]])] <- values(dots[[i]])
     } else {
       if (is.null(names) || names[i] == '')
@@ -228,7 +211,6 @@ entries <- function(dict) {
   dict
 }
 
-#' @export
 entry <- function(key, value) {
   if (!is.character(key))
     stop('Key should be character')
@@ -271,12 +253,10 @@ print_kv <- function(key, value, key_width=NULL) {
   }
 }
 
-#' @export
 print.entry <- function(entry) {
   print(unclass(entry))
 }
 
-#' @export
 print.entries <- function(entries) {
   if (length(entries) == 0)
     return()
@@ -287,7 +267,7 @@ print.entries <- function(entries) {
 }
 
 #' @export
-print.dict <- function(dict) {
+print.dict <- function(dict, digits=7L) {
   if (length(dict) == 0) {
     cat('(empty dictionary)\n')
     return()
@@ -310,7 +290,7 @@ str.dict <- function(dict, ...) {
 
 #' @export
 mapkv <- function(dict, .f, ...) {
-  if (! is.dict(dict))
+  if (! is_dict(dict))
     stop('Object of class dict expected.')
   ret <- map2(keys(dict), as.list(dict), .f, ...)
   keys(ret) <- keys(dict)
@@ -382,7 +362,6 @@ type_check <- function(val, type, name, struct) {
       return(TRUE)
   }
 }
-
 
 #' @export
 struct <- function(.name, ...) {
@@ -466,7 +445,7 @@ is.struct <- function(struct) {
 print.struct <- function(struct) {
   class <- class(struct)
   types <- attr(struct, 'types')
-  cat('Struct of class ', class[1], '\n')
+  cat('Struct of class', class[1], '\n')
   print.dict(struct)
 }
 
@@ -501,9 +480,11 @@ describe <- function(struct) {
     stop('Key should be a character value.')
   if (!is.struct(struct))
     stop('Malformed struct.')
-  if (! key %in% keys(struct))
-    stop('Field "', key, '" does not exist in the definition of struct ', class(struct)[1])
+  
   types <- attr(struct, 'types')
+  if (! key %in% keys(types))
+    stop('Field "', key, '" does not exist in the definition of struct ', class(struct)[1])
+
   type_check(value, types[[key]], key, struct)
   NextMethod()
 }
@@ -515,7 +496,8 @@ describe <- function(struct) {
   if (!is.struct(struct))
     stop('Malformed struct.')
 
-  if (length(setdiff(keys, keys(struct))) != 0)
+  types <- attr(struct, 'types')
+  if (length(setdiff(keys, keys(types))) != 0)
     stop('Unknown fields specified: ', str_c(setdiff(keys, keys(struct)), sep=', '))
 
   class <- class(struct)
@@ -523,9 +505,103 @@ describe <- function(struct) {
   struct[keys] <- values
   class(struct) <- class
 
-  types <- attr(struct, 'types')
-  for (k in keys(struct))
+  for (k in keys)
     type_check(struct[[k]], types[[k]], k, struct)
 
   struct
+}
+
+#' @export
+as.list.struct <- function(struct) {
+  struct <- unclass(struct)
+  attr(struct, 'types') <- NULL
+  struct
+}
+
+enum <- function(.name, ...) {
+  if (!is.character(.name))
+    stop('The name of the enumeration should be a character string.')
+  
+  dots <- eval(substitute(alist(...)))
+  
+  if (length(dots) == 0)
+    stop('Specify at least one label.')
+  
+  dots_names <- names(dots)
+  if (is.null(dots_names))
+    dots_names <- rep("", length(dots))
+
+  enum <- list()
+  last <- 1L
+  for (i in seq_along(dots)) {
+    if (dots_names[i] == "") {
+      label <- as.character(dots[[i]])
+      enum[[label]] <- structure(last, class=c(.name, 'enum_entry'), label=label)
+    } else {
+      label <- dots_names[[i]]
+      if (!is.numeric(dots[[i]]))
+        stop('Enumeration values should be integers.')
+
+      last <- as.integer(dots[[i]])
+      enum[[label]] <- structure(last, class=c(.name, 'enum_entry'), label=label)
+    }
+
+    last <- last + 1
+  }
+
+  class(enum) <- c(.name, 'enum')
+  enum
+}
+
+print.enum <- function(enum) {
+  cat('Enum of class ', class(enum)[1], ' containing:\n', sep='')
+  cat(sprintf("%s [%d]", names(enum), unlist(enum)), sep=', ')
+  cat('\n')
+}
+
+c.enum <- function(enum1, ...) {
+  enums <- map(list(...), function(e) {
+    if (!identical(class(enum1), class(e))) {      
+      stop('Attempting to concatenate an enum of class ', class(enum1)[1], ' to an object of a different class.')
+    }
+    unclass(e)
+  })
+
+  
+  e <- reduce(enums, c, .init=unclass(enum1))
+  e <- e[unique(names(e))]
+  class(e) <- class(enum1)
+  e
+}
+
+`$.enum` <- function(enum, key) {
+  enum[key]
+}
+
+`[.enum` <- function(e, ...) {
+  keys <- unique(c(...))
+  if (! is.character(keys))
+    stop('Enumeration label should be character')
+  if (any(! keys %in% names(e)))
+    stop('Non-existent label specified.')
+  
+  ret <- structure(unclass(e)[keys], 
+                  class=class(e))
+}
+
+`[[.enum` <- `$.enum`
+
+`$<-.enum` <- function(...) {
+  stop("Cannot add new values to enumeration.")
+}
+
+`[[<-.enum` <- `$<-.enum`
+`[<-.enum` <- `$<-.enum`
+`==.enum` <- base::identical
+
+print.enum_entry <- function(entry) {
+  cat(sprintf("%s [%d] of enum %s\n",
+              attr(entry, 'label'),
+              entry,
+              class(entry)[1]))
 }
