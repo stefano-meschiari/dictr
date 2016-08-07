@@ -1,18 +1,19 @@
-Package: nicer
+Package: dict
 Type: Package
-Title: Make R niceR
-Version: 0.2
-Date: 2016-06-27
-Author: Stefano Meschiari
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Title: A dictionary class for R
+Version: 0.4
+Date: 2016-08-07
+Authors@R: person("Stefano", "Meschiari", email="stefano.meschiari@gmail.com", role=c("aut", "cre"))
+Description: Provides an implementation of a dictionary class with character keys. It offers several
+  features over named lists, including unique keys, no partial matching, compact printing, default values,
+  and ability to store NULLs.
+License: MIT
 LazyData: TRUE
-Depends:
+Imports:
     purrr,
-    stringr,
-    lazyeval
+    stringr
 RoxygenNote: 5.0.1
 Suggests: knitr,
-    rmarkdown
+    rmarkdown,
+    testthat
 VignetteBuilder: knitr
