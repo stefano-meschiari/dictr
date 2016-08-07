@@ -14,11 +14,19 @@ a list containing lists with two items, \code{key} and \code{value}, for each en
 dictionary.
 }
 \description{
-Converts a dictionary to a list of key/value pairs
+Converts a dictionary into a list of entries containing key/value pairs, of the form
+\code{list(entry(key = key1, value = value1), entry(key = key2, value = value2), ...)}.
+Each element of the list is a list containing a key element and a value element, created using
+the \link{entry} function. A list of entries can be collected back into a dictionary using
+the \link{collect} function.
 }
 \examples{
-distances <- dict(Mercury = 0.387, Venus = 0.723, Earth = 1)
-for (e in entries(distances))
+solar_system <- dict(Mercury = 0.387, Venus = 0.723, Earth = 1, Mars = 1.524)
+for (e in entries(solar_system))
    cat('The distance between planet', e$key, ' and the Sun is', e$value, ' AU.\\n')
+
+inner_solar_system <- entries(solar_system) \%>\%
+             keep(function(e) e$value <= 1) \%>\%
+             collect()
 }
 

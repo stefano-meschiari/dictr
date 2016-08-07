@@ -1,7 +1,6 @@
-#' Creates a new dictionary.
+#' Creates a new dictionary
 #'
-#' Functions to create new dictionary objects.
-#'
+#' @details
 #' These functions are used to build a new dictionary object filled with the key = value pairs
 #' passed as arguments. Typical dictionary objects are created using \code{dict}.
 #'
@@ -45,12 +44,13 @@ dict <- function(...) {
   as_dict(data)
 }
 
+`%||%` <- purrr::`%||%`
 
 #' @rdname dict
 #' @export
-default_dict <- function(..., default=NULL) {
+default_dict <- function(..., .default=NULL) {
   dict <- dict(...)
-  default(dict) <- default
+  default(dict) <- .default
   dict
 }
 
@@ -98,7 +98,7 @@ default <- function(dict) {
 #' @examples
 #' employee <- make_dict(c('name', 'age'), list('John', 60))
 make_dict <- function(keys, values, default=NULL, strict=FALSE) {
-  dict <- as_dict(set_names(values, keys))
+  dict <- as_dict(purrr::set_names(values, keys))
   attr(dict, 'default') <- default
   if (strict)
     attr(dict, 'strict') <- TRUE
@@ -123,12 +123,13 @@ length.dict <- function(dict) {
 #'
 #' @export
 is_dict <- function(obj) {
-  inherits(obj, 'dict')
+  inherits(obj, 'dict') && is.list(obj)
 }
 
 #' Coerces an object to a dictionary
 #'
-#' Coerces a named list or vector to a dictionary.
+#' Coerces a named list, a vector, or a list of \link{entries} to a dictionary. \code{collect}
+#' and \code{as_dict} are synonymous.
 #'
 #' @param obj a named list or vector.
 #' @return a dictionary containing the same keys and values as the input object.
@@ -136,11 +137,11 @@ is_dict <- function(obj) {
 #' @export
 as_dict <- function(obj) {
   if (inherits(obj, 'entries')) {
-    names <- map(obj, 'key')
-    values <- map(obj, 'value')
-    obj <- set_names(values, names)
+    names <- purrr::map_chr(obj, 'key')
+    values <- purrr::map(obj, 'value')
+    obj <- purrr::set_names(values, names)
   } else if (inherits(obj, 'entry')) {
-    obj <- set_names(obj$value, obj$key)
+    obj <- purrr::set_names(obj$value, obj$key)
   }
 
   obj <- as.list(obj)
@@ -152,6 +153,10 @@ as_dict <- function(obj) {
 
   structure(obj, class=c('dict', 'list'))
 }
+
+#' @export
+#' @rdname as_dict
+collect <- as_dict
 
 #' Access or replace values of a dictionary
 #'
@@ -231,7 +236,7 @@ NULL
   if (!is.character(keys))
     stop('Only character keys allowed.')
 
-  make_dict(keys, map(keys, ~ dict[[.x]]))
+  make_dict(keys, purrr::map(keys, ~ dict[[.x]]))
 }
 
 #' @export
@@ -242,8 +247,14 @@ NULL
     stop('Only character keys allowed.')
   if (length(unique(keys)) > length(value))
     stop('Not enough values for the specified keys.')
-  for (i in seq_along(keys))
-    dict[[keys[i]]] <- value[[i]]
+
+  if (! is.null(keys(value))) {
+    for (key in keys)
+      dict[[key]] <- value[[key]]
+  } else {
+    for (i in seq_along(keys))
+      dict[[keys[i]]] <- value[[i]]
+  }
   dict
 }
 
@@ -274,7 +285,7 @@ as.list.dict <- function(dict) {
     return(FALSE)
 
   keys <- union(keys(dict), keys(other))
-  set_names(map_lgl(keys, ~ identical(dict[[.x]], other[[.x]])), keys)
+  purrr::set_names(purrr::map_lgl(keys, ~ identical(dict[[.x]], other[[.x]])), keys)
 }
 
 #' Removes key(s) from a dictionary or named list
@@ -289,6 +300,7 @@ omit <- function(dict, ...) {
   UseMethod('omit', dict)
 }
 
+#' @export
 omit.list <- function(dict, ...) {
   keys <- c(...)
   if (!is.character(keys))
@@ -298,6 +310,7 @@ omit.list <- function(dict, ...) {
   dict[keys]
 }
 
+#' @export
 omit.dict <- omit.list
 
 #' Merge two dictionaries or named lists.
@@ -317,6 +330,7 @@ extend <- function(x, ...) {
   UseMethod('extend', x)
 }
 
+#' @export
 extend.list <- function(x, ...) {
   dots <- list(...)
   if (length(dots) == 0)
@@ -335,6 +349,7 @@ extend.list <- function(x, ...) {
   x
 }
 
+#' @export
 extend.dict <- extend.list
 
 #' @export
@@ -343,13 +358,12 @@ defaults <- function(x, defaults) {
   UseMethod('defaults', x)
 }
 
+#' @export
 defaults.list <- function(x, defaults) {
   missing_keys <- setdiff(names(defaults), names(x))
   x[missing_keys] <- defaults[missing_keys]
   x
 }
-
-defaults.dict <- defaults.list
 
 #' Returns or assigns the keys of the provided dictionary.
 #'
@@ -380,14 +394,25 @@ values <- function(dict) {
 }
 
 #' Converts a dictionary to a list of key/value pairs
+#'
+#' Converts a dictionary into a list of entries containing key/value pairs, of the form
+#' \code{list(entry(key = key1, value = value1), entry(key = key2, value = value2), ...)}.
+#' Each element of the list is a list containing a key element and a value element, created using
+#' the \link{entry} function. A list of entries can be collected back into a dictionary using
+#' the \link{collect} function.
+#'
 #' @param dict a dictionary
 #' @return a list containing lists with two items, \code{key} and \code{value}, for each entry in the
 #' dictionary.
 #' @export
 #' @examples
-#' distances <- dict(Mercury = 0.387, Venus = 0.723, Earth = 1)
-#' for (e in entries(distances))
+#' solar_system <- dict(Mercury = 0.387, Venus = 0.723, Earth = 1, Mars = 1.524)
+#' for (e in entries(solar_system))
 #'    cat('The distance between planet', e$key, ' and the Sun is', e$value, ' AU.\n')
+#'
+#' inner_solar_system <- entries(solar_system) %>%
+#'              keep(function(e) e$value <= 1) %>%
+#'              collect()
 entries <- function(dict) {
   structure(map_dict(dict, entry), class=c('entries', 'list'))
 }
@@ -398,6 +423,10 @@ entries <- function(dict) {
   dict
 }
 
+#' Returns a list with elements \code{key} and \code{value}.
+#' @param key the key
+#' @param value the value
+#' @export
 entry <- function(key, value) {
   if (!is.character(key))
     stop('Key should be character')
@@ -410,16 +439,16 @@ print_kv <- function(key, value, key_width=NULL, digits=digits) {
   tc <- textConnection('printentry', 'w')
   on.exit({ options(width=screen_width); close(tc) })
 
-  key_width <- 2 + key_width %||% str_length(key)
+  key_width <- 2 + key_width %||% stringr::str_length(key)
   if (is.na(key))
     key <- '<NA>'
 
-  key <- str_c('$ ', as.character(key))
+  key <- stringr::str_c('$ ', as.character(key))
 
-  if (str_length(key) - 3 > key_width) {
-    fmt <- str_c('%', (key_width-3), 's...')
+  if (stringr::str_length(key) - 3 > key_width) {
+    fmt <- stringr::str_c('%', (key_width-3), 's...')
   } else {
-    fmt <- str_c('%', (key_width), 's')
+    fmt <- stringr::str_c('%', (key_width), 's')
   }
   cat(sprintf(fmt, key), ' : ', sep='')
 
@@ -441,15 +470,17 @@ print_kv <- function(key, value, key_width=NULL, digits=digits) {
   }
 }
 
+#' @export
 print.entry <- function(entry) {
   print(unclass(entry))
 }
 
+#' @export
 print.entries <- function(entries) {
   if (length(entries) == 0)
     return()
 
-  key_width <- min(30, max(map_int(entries, ~ str_length(.x$key)), na.rm=TRUE))
+  key_width <- min(30, max(purrr::map_int(entries, ~ stringr::str_length(.x$key)), na.rm=TRUE))
   for (entry in entries)
     print_kv(entry$key, entry$value, key_width=key_width)
 }
@@ -466,9 +497,15 @@ print.dict <- function(x, digits=NULL) {
     return()
   }
 
-  key_width <- min(30, max(str_length(keys(x)), na.rm=TRUE))
+  n <- 1
+  key_width <- min(30, max(stringr::str_length(keys(x)), na.rm=TRUE))
   for (key in keys(x)) {
     print_kv(key, x[[key]], key_width=key_width, digits=digits)
+    n <- n+1
+    if (n > getOption('max.print')) {
+      cat(sprintf('[ reached getOption("max.print") -- omitted %d entries. ]', length(x)-n))
+      break
+    }
   }
   invisible(x)
 }
@@ -488,21 +525,49 @@ str.dict <- function(dict, ...) {
   str(unclass(dict), ...)
 }
 
-#' Apply a function to each entry of the dictionary
+#' Map, filter, collect on keys and values of the dictionary
 #'
-#' Calls a function on each entry and builds a dictionary from the transformed input. See \link[purrr]{map}.
+#' \code{map_dict} calls a function on each (key, value) pair and builds a dictionary from the transformed input
+#' (see \link[purrr]{map} in package \code{purrr}).
+#' \code{keep_dict} and \code{discard_dict} keep and discard elements based on the return value of the
+#' predicate function (see \link[purrr]{keep} and \link[purrr]{discard} in package \code{purrr}).
+#' \code{compact_dict} returns a dictionary with all the \code{NULL} values removed.
 #' @param dict A dictionary
 #' @param .f A function, formula or character vector.
+#' @param .p A predicate function returning a logical value.
 #' If a function, it is called with two arguments, the key and the value.
 #' If a formula, .x corresponds to the key and .y to the value.
-#' If a character vector, it will return the keys specified in the vector
-#' @return A dictionary with the same keys as \code{dict}, and values given by the return value of \code{.f}.
+#' If a character vector, it will return the values corresponding to the keys in the vector.
+#' @return For \code{map_dict}, a dictionary with the same keys as \code{dict}, and values
+#' given by the return value of \code{.f}. For \code{keep_dict}, \code{discard_dict}, and
+#' \code{compact_dict}, a dictionary containing the entries that passed the filter.
 #' @export
 map_dict <- function(dict, .f, ...) {
   if (! is_dict(dict))
     stop('Object of class dict expected.')
-  make_dict(keys(dict), map2(keys(dict), values(dict), .f, ...))
+  make_dict(keys(dict), purrr::map2(keys(dict), values(dict), .f, ...))
 }
+
+#' @export
+#' @rdname map_dict
+keep_dict <- function(dict, .p, ...) {
+  keys <- purrr::map2_lgl(keys(dict), values(dict), .p, ...)
+  dict[keys(dict)[keys]]
+}
+
+#' @export
+#' @rdname map_dict
+discard_dict <- function(dict, .p, ...) {
+  keys <- purrr::map2_lgl(keys(dict), values(dict), .p, ...)
+  dict[keys(dict)[!keys]]
+}
+
+#' @export
+#' @rdname map_dict
+compact_dict <- function(dict) {
+  discard_dict(dict, function(k, v) is.null(v))
+}
+
 
 #' Inverts a dictionary
 #'
@@ -518,22 +583,20 @@ invert <- function(dict) {
             keys(dict))
 }
 
-
 #' Finds the key of the first match
 #'
 #' See \link[purrr]{detect}. This function calls the predicate \code{.p} on the
 #' values of \code{dict}, and returns the first key for which the predicate is \code{TRUE}.
 #'
 #' @param dict a dictionary
-#' @param .p a single predicate function (see \link[purrr]{detect})
+#' @param .p a single predicate function (see \link[purrr]{detect}), which is passed the values of dict
 #' @param ... additional parameters passed to \code{.p}
-#' @param right whether to start the search from the beginning or end of the dictionary
-#'
+#' @param .right whether to start the search from the beginning or end of the dictionary
+#' @return the first match for which the predicate is TRUE
 #' @export
-detect_key <- function(dict, .p, ..., right=FALSE) {
-  keys(dict)[detect(dict, .p, ..., right=FALSE)]
+detect_key <- function(dict, .p, ..., .right=FALSE) {
+  keys(dict)[purrr::detect(values(dict), .p, ..., .right=.right)]
 }
-
 
 #' Check whether a dictionary contains the specified key(s)
 #'

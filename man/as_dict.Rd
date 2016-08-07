@@ -2,9 +2,12 @@
 % Please edit documentation in R/dict.r
 \name{as_dict}
 \alias{as_dict}
+\alias{collect}
 \title{Coerces an object to a dictionary}
 \usage{
 as_dict(obj)
+
+collect(obj)
 }
 \arguments{
 \item{obj}{a named list or vector.}
@@ -13,6 +16,7 @@ as_dict(obj)
 a dictionary containing the same keys and values as the input object.
 }
 \description{
-Coerces a named list or vector to a dictionary.
+Coerces a named list, a vector, or a list of \link{entries} to a dictionary. \code{collect}
+and \code{as_dict} are synonymous.
 }
 

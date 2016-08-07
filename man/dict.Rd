@@ -4,11 +4,11 @@
 \alias{default_dict}
 \alias{dict}
 \alias{strict_dict}
-\title{Creates a new dictionary.}
+\title{Creates a new dictionary}
 \usage{
 dict(...)
 
-default_dict(..., default = NULL)
+default_dict(..., .default = NULL)
 
 strict_dict(...)
 }
@@ -21,7 +21,7 @@ strict_dict(...)
 a new dictionary object.
 }
 \description{
-Functions to create new dictionary objects.
+Creates a new dictionary
 }
 \details{
 These functions are used to build a new dictionary object filled with the key = value pairs
@@ -54,7 +54,8 @@ an exception will be raised instead of returning \code{NULL}.
 }
 \examples{
 person <- dict(name = "Joan", last_name = "Smith", age = 30)
-salaries <- default_dict(employee_A = 100, employee_B = 50, employee_C = 75, default = 60)
+salaries <- default_dict(employee_A = 100, employee_B = 50,
+                         employee_C = 75, default = 60)
 enumeration <- strict_dict(YES = 1, NO = 0)
 }
 

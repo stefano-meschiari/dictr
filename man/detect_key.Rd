@@ -4,16 +4,19 @@
 \alias{detect_key}
 \title{Finds the key of the first match}
 \usage{
-detect_key(dict, .p, ..., right = FALSE)
+detect_key(dict, .p, ..., .right = FALSE)
 }
 \arguments{
 \item{dict}{a dictionary}
 
-\item{.p}{a single predicate function (see \link[purrr]{detect})}
+\item{.p}{a single predicate function (see \link[purrr]{detect}), which is passed the values of dict}
 
 \item{...}{additional parameters passed to \code{.p}}
 
-\item{right}{whether to start the search from the beginning or end of the dictionary}
+\item{.right}{whether to start the search from the beginning or end of the dictionary}
+}
+\value{
+the first match for which the predicate is TRUE
 }
 \description{
 See \link[purrr]{detect}. This function calls the predicate \code{.p} on the
