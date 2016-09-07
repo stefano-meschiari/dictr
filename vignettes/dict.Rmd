@@ -55,6 +55,18 @@ Printing looks nice:
 print(d)
 ```
 
+You can use a shorthand and leave keys implicit (this is similar to the ES6 object literal shorthand). `dict` will try to create implicit keys based on the arguments:
+
+```{r}
+operating_system <- 'Amiga OS'
+version <- '3.1'
+cpu <- '68040'
+
+machine <- dict(operating_system, version, cpu)
+
+print(machine)
+```
+
 ## Accessing entries
 You can access values using the familiar R syntax for lists:
 ```{r, eval=FALSE}
@@ -121,7 +133,7 @@ salaries <- default_dict(employee_a = 50000,
                          default = 65000)
 ```
 
-You can turn any dictionary into a default dictionary by setting its `default` attribute:
+You can provide a default value for an existing dictionary by setting its `default` attribute:
 
 ```{r}
 attr(salaries, 'default') <- 70000
@@ -138,4 +150,25 @@ print(letters_to_numbers$a)
 
 # Accessing a non-letter will throw!
 tryCatch(letters_to_numbers$notaletter, error=function(e) print(e))
+```
+
+## Immutable collections
+You can turn any collection (lists, vectors, and `dicts`) into an immutable collection using the `immutable` function. Such a collection cannot be modified using the `[`, `[[` and `$` operators; otherwise, it will behave the same as the original collection. The `immutable_dict` function creates an immutable dictionary.
+
+```{r, error=TRUE}
+const_letters <- immutable(letters)
+
+# Will throw an error
+const_letters[1] <- '1' 
+```
+
+```{r, error=TRUE}
+physical_constants <- immutable_dict(
+  astronomical_unit = 1.5e11,
+  speed_of_light = 3e8,
+  gravitational_constant = 6.7e-11
+)
+
+# Will throw an error
+physical_constants$speed_of_light = 1
 ```

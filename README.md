@@ -3,7 +3,7 @@
 Install the package using [devtools](http://cran.r-%20project.org/package=devtools):
 
 ``` r
-devtools::install_github('stefano-meschiari/dict')
+devtools::install_github('stefano-meschiari/nicer')
 ```
 
 and import the library with `library`:
@@ -22,6 +22,7 @@ The new class `dict` can be used to represent a heterogeneous dictionary with ch
 -   Printing of dicts is more compact.
 -   Keys are never partially matched (a key named `test` will not match with `t` or `te`).
 -   A dict can have default values for non-existing keys.
+-   Dicts can contain NULL values.
 
 Creating a dictionary
 ---------------------
@@ -54,6 +55,22 @@ print(d)
     ##   $ color : [1] "blue"
     ## $ pattern : [1] "solid"
     ##   $ width : [1] 3
+
+You can use a shorthand and leave keys implicit (this is similar to the ES6 object literal shorthand). `dict` will try to create implicit keys based on the arguments:
+
+``` r
+operating_system <- 'Amiga OS'
+version <- '3.1'
+cpu <- '68040'
+
+machine <- dict(operating_system, version, cpu)
+
+print(machine)
+```
+
+    ## $ operating_system : [1] "Amiga OS"
+    ##          $ version : [1] "3.1"
+    ##              $ cpu : [1] "68040"
 
 Accessing entries
 -----------------
@@ -133,7 +150,7 @@ salaries <- default_dict(employee_a = 50000,
                          default = 65000)
 ```
 
-You can turn any dictionary into a default dictionary by setting its `default` attribute:
+You can provide a default value for an existing dictionary by setting its `default` attribute:
 
 ``` r
 attr(salaries, 'default') <- 70000
@@ -160,3 +177,30 @@ tryCatch(letters_to_numbers$notaletter, error=function(e) print(e))
 ```
 
     ## <simpleError in `$.dict`(letters_to_numbers, notaletter): Attempted access of non-existing keynotaletter>
+
+Immutable collections
+---------------------
+
+You can turn any collection (lists, vectors, and `dicts`) into an immutable collection using the `immutable` function. Such a collection cannot be modified using the `[`, `[[` and `$` operators; otherwise, it will behave the same as the original collection. The `immutable_dict` function creates an immutable dictionary.
+
+``` r
+const_letters <- immutable(letters)
+
+# Will throw an error
+const_letters[1] <- '1' 
+```
+
+    ## Error in `[<-.immutable`(`*tmp*`, 1, value = "1"): Attempting to mutate an immutable collection.
+
+``` r
+physical_constants <- immutable_dict(
+  astronomical_unit = 1.5e11,
+  speed_of_light = 3e8,
+  gravitational_constant = 6.7e-11
+)
+
+# Will throw an error
+physical_constants$speed_of_light = 1
+```
+
+    ## Error in `$<-.immutable`(`*tmp*`, "speed_of_light", value = 1): Attempting to mutate an immutable collection.

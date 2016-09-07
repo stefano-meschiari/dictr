@@ -45,10 +45,10 @@
 #' color <- 'blue'
 #' pattern <- 'vertical'
 #' fill <- dict(color, pattern)
-#' 
+#'
 #' salaries <- default_dict(employee_A = 100, employee_B = 50,
 #'                          employee_C = 75, default = 60)
-#' 
+#'
 #' enumeration <- strict_dict(YES = 1, NO = 0)
 dict <- function(...) {
 
@@ -62,18 +62,18 @@ dict <- function(...) {
       stop('Implicit keys are not valid for arguments: ', paste(non_syntactic))
     }
     dots_names <- ifelse(names(dots) == "", as.character(dots), names(dots))
-    
+
     if (length(unique(dots_names)) != length(dots_names)) {
       repeated <- table(dots_names)[table(dots_names) > 1]
       stop('The following keys are specified more than once: ', paste(names(repeated), collapse=' '))
-    } 
+    }
 
     structure(list(...), names=dots_names)
   }
 
 
-  data <- list(...)
-  
+  data <- key_args(...)
+
   as_dict(data)
 }
 
@@ -174,6 +174,9 @@ is_dict <- function(obj) {
 #'
 #' @export
 as_dict <- function(obj) {
+  if (is_dict(obj))
+    return(obj)
+
   if (inherits(obj, 'entries')) {
     names <- purrr::map_chr(obj, 'key')
     values <- purrr::map(obj, 'value')
@@ -354,10 +357,11 @@ omit.dict <- omit.list
 #' Merge two dictionaries or named lists.
 #'
 #' @details
-#' \code{extend} overrides the entries in the first object with entries from the following objects,
+#' \code{extend} overrides the entries in the first dictionary with entries from the following objects,
 #' left to right (each object overrides entries from the previous argument).
 #'
-#' \code{defaults} provides default values for keys not present in the first object.
+#' \code{defaults} augments the entries in the first dictionary with entries from the second dictionary
+#' that were not present in the first.
 #'
 #' @param x original object; a dictionary or named list
 #' @param ... dictionaries or named lists that override \code{x}
@@ -389,6 +393,11 @@ extend.list <- function(x, ...) {
 
 #' @export
 extend.dict <- extend.list
+
+#' @export
+c.dict <- function(...) {
+  extend.dict(...)
+}
 
 #' @export
 #' @rdname extend

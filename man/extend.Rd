@@ -20,9 +20,10 @@ defaults(x, defaults)
 Merge two dictionaries or named lists.
 }
 \details{
-\code{extend} overrides the entries in the first object with entries from the following objects,
+\code{extend} overrides the entries in the first dictionary with entries from the following objects,
 left to right (each object overrides entries from the previous argument).
 
-\code{defaults} provides default values for keys not present in the first object.
+\code{defaults} augments the entries in the first dictionary with entries from the second dictionary
+that were not present in the first.
 }
 
