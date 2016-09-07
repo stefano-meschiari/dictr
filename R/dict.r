@@ -1,15 +1,18 @@
 #' Creates a new dictionary
 #'
+#' Creates a new dictionary based on the specified key/value pairs.
+#'
 #' @details
 #' These functions are used to build a new dictionary object filled with the key = value pairs
-#' passed as arguments. Typical dictionary objects are created using \code{dict}.
+#' passed as arguments. Typical dictionary objects are created using \code{dict}. If a key is not
+#' specified, an implicit key is assumed.
 #'
 #' Dictionary objects are equivalent to named lists, but have a few advantages over them.
 #'
-#' Firstly, all values contained in dictionary objects are associated with a unique character key.
+#' Firstly, all values contained in dictionary objects are always associated with a unique character key.
 #' This means that values can only be accessed using their respective keys, and not using
-#' integer indices, which is more consistent with the intended usage. It is also not possible
-#' to have empty or repeated keys.
+#' integer indices, which is more consistent with the intended usage. Empty or repeated keys
+#' are not allowed.
 #'
 #' Secondly, keys are never partially matched; for instance, \code{my_dict$k} will not match
 #' \code{my_dict$key} but will instead return \code{NULL}.
@@ -26,8 +29,10 @@
 #' \code{default_dict} creates a dictionary with default values. When the user accesses a
 #' non-existing key, the default value will be returned instead of \code{NULL}.
 #'
-#' \code{strict_dict} also creates a dictionary. When the user accesses a non-existing key,
+#' \code{strict_dict} creates a dictionary such that when the user accesses a non-existing key,
 #' an exception will be raised instead of returning \code{NULL}.
+#'
+#' \code{immutable_dict} creates a dictionary that cannot be modified (see \link{immutable}).
 #'
 #' @param ... key and value pairs. All arguments must be named.
 #' @param default a default value to be returned when a non-existing key is accessed.
@@ -36,11 +41,39 @@
 #'
 #' @examples
 #' person <- dict(name = "Joan", last_name = "Smith", age = 30)
+#'
+#' color <- 'blue'
+#' pattern <- 'vertical'
+#' fill <- dict(color, pattern)
+#' 
 #' salaries <- default_dict(employee_A = 100, employee_B = 50,
 #'                          employee_C = 75, default = 60)
+#' 
 #' enumeration <- strict_dict(YES = 1, NO = 0)
 dict <- function(...) {
+
+  key_args <- function(...) {
+    dots <- eval(substitute(alist(...)))
+    if (is.null(names(dots)))
+      names(dots) <- rep('', length(dots))
+    implicit_names <- as.character(dots[names(dots) == ""])
+    if (!identical(make.names(implicit_names), implicit_names)) {
+      non_syntactic <- implicit_names[make.names(implicit_names) != implicit_names]
+      stop('Implicit keys are not valid for arguments: ', paste(non_syntactic))
+    }
+    dots_names <- ifelse(names(dots) == "", as.character(dots), names(dots))
+    
+    if (length(unique(dots_names)) != length(dots_names)) {
+      repeated <- table(dots_names)[table(dots_names) > 1]
+      stop('The following keys are specified more than once: ', paste(names(repeated), collapse=' '))
+    } 
+
+    structure(list(...), names=dots_names)
+  }
+
+
   data <- list(...)
+  
   as_dict(data)
 }
 
@@ -62,6 +95,11 @@ strict_dict <- function(...) {
   dict
 }
 
+#' @rdname dict
+#' @export
+immutable_dict <- function(...) {
+  immutable(dict(...))
+}
 
 #' Gets and sets the default value of a dictionary.
 #'
@@ -608,3 +646,41 @@ has <- function(dict, keys) {
   keys %in% keys(dict)
 }
 
+#' Transforms any collection into an immutable collection.
+#'
+#' Returns a copy of the collection that cannot be modified using the bracket, double bracket
+#' or dollar operators.
+#'
+#' @param coll collection to be made immutable
+#' @return a copy of the collection, marked as immutable
+#' @export
+immutable <- function(coll) {
+  class(coll) <- c('immutable', class(coll))
+  coll
+}
+
+#' Checks whether a collection is immutable
+#' @param coll collection
+#' @return TRUE if immutable, FALSE otherwise
+#' @export
+is_immutable <- function(coll) {
+  inherits(coll, 'immutable') && class(coll)[1] == 'immutable'
+}
+
+#' @export
+`[<-.immutable` <- function(...) {
+  stop('Attempting to mutate an immutable collection.')
+}
+
+#' @export
+`[[<-.immutable` <- `[<-.immutable`
+
+#' @export
+`$<-.immutable` <- `[<-.immutable`
+
+#' @export
+print.immutable <- function(x, ...) {
+  cat('(immutable collection)\n')
+  class(x) <- setdiff(class(x), 'immutable')
+  NextMethod(x)
+}
