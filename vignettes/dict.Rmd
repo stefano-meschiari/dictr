@@ -13,7 +13,7 @@ vignette: >
 Install the package using [devtools](http://cran.r-
 project.org/package=devtools):
 ```{r, eval=FALSE}
-devtools::install_github('stefano-meschiari/nicer')
+devtools::install_github('stefano-meschiari/dict')
 ```
 and import the library with `library`:
 ```{r, eval=FALSE}
@@ -32,6 +32,8 @@ The new class `dict` can be used to represent a heterogeneous dictionary with ch
 - Keys are never partially matched (a key named `test` will not match with `t` or `te`).
 - A dict can have default values for non-existing keys.
 - Dicts can contain NULL values.
+
+This library also provides some useful functions for manipulating dictionary-like objects.
 
 ## Creating a dictionary
 The `dict` function can be used to create a new dictionary:
@@ -116,7 +118,7 @@ d$b <- NULL         # a=1, b=NULL, c=3
 d <- omit(a, 'a')   # b=NULL, c=3
 ```
 
-## Utilities
+## Utility functions
 A few utility functions inspired by the Underscore library:
 
 - `invert(dict)` returns a dictionary where keys and values are swapped.
@@ -124,6 +126,12 @@ A few utility functions inspired by the Underscore library:
 - `omit(dict, key1, key2, ...)` returns a new dictionary omitting all the specified keys.
 - `extend(dict, dict1, ...)` copies all entries in `dict1` into `dict`, overriding any existing entries and returns a new dictionary.
 - `defaults(dict, defaults)` fill in entries from `defaults` into `dict` for any keys missing in `dict`.
+
+The following functions specialize functions from the `purrr` library to dictionary objects:
+
+- `map_dict(dict, fun, ...)` calls a function on each (key, value) pair and builds a dictionary from the transformed input.
+- `keep_dict(dict, fun)` and `discard_dict(dict, fun)` keep or discard entries based on the function or predicate.
+- `compact_dict(dict)` removes any entries with NULL values.
 
 ## Default dictionaries
 You can create a dictionary with default values using `default_dict`. Any time a non-existing key is accessed, the default value is returned.
@@ -172,3 +180,4 @@ physical_constants <- immutable_dict(
 # Will throw an error
 physical_constants$speed_of_light = 1
 ```
+

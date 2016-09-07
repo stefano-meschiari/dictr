@@ -3,7 +3,7 @@
 Install the package using [devtools](http://cran.r-%20project.org/package=devtools):
 
 ``` r
-devtools::install_github('stefano-meschiari/nicer')
+devtools::install_github('stefano-meschiari/dict')
 ```
 
 and import the library with `library`:
