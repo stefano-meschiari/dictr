@@ -24,6 +24,8 @@ The new class `dict` can be used to represent a heterogeneous dictionary with ch
 -   A dict can have default values for non-existing keys.
 -   Dicts can contain NULL values.
 
+This library also provides some useful functions for manipulating dictionary-like objects.
+
 Creating a dictionary
 ---------------------
 
