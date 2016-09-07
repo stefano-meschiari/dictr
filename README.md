@@ -130,8 +130,8 @@ d$b <- NULL         # a=1, b=NULL, c=3
 d <- omit(a, 'a')   # b=NULL, c=3
 ```
 
-Utilities
----------
+Utility functions
+-----------------
 
 A few utility functions inspired by the Underscore library:
 
@@ -140,6 +140,12 @@ A few utility functions inspired by the Underscore library:
 -   `omit(dict, key1, key2, ...)` returns a new dictionary omitting all the specified keys.
 -   `extend(dict, dict1, ...)` copies all entries in `dict1` into `dict`, overriding any existing entries and returns a new dictionary.
 -   `defaults(dict, defaults)` fill in entries from `defaults` into `dict` for any keys missing in `dict`.
+
+The following functions specialize functions from the `purrr` library to dictionary objects:
+
+-   `map_dict(dict, fun, ...)` calls a function on each (key, value) pair and builds a dictionary from the transformed input.
+-   `keep_dict(dict, fun)` and `discard_dict(dict, fun)` keep or discard entries based on the function or predicate.
+-   `compact_dict(dict)` removes any entries with NULL values.
 
 Default dictionaries
 --------------------
