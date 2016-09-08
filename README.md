@@ -42,10 +42,11 @@ d <- make_dict(keys=c('color', 'pattern', 'width'),
                values=c('blue', 'solid', 3))
 ```
 
-You can convert a named list to a dictionary using `as.dict`:
+You can convert a named list or vector to a dictionary using `as_dict`:
 
 ``` r
 d <- as_dict(list(color='blue', pattern='solid', width=3))
+d <- as_dict(c("a" = 1, "b" = 2))
 ```
 
 Printing looks nice:
