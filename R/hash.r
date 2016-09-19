@@ -5,7 +5,7 @@ library(Rcpp)
 #' Computes the hash code of an arbitrary object.
 #'
 #' Computes the hash code of an object. The default implementation serializes the object and computes the
-#' hash using the \link[digest]{digest} function in the digest package (algorithm xxhash32).
+#' hash code of the bytes.
 #'
 #' hash_code is a generic function, so its default behavior can be overridden for a class.
 #'
