@@ -1,5 +1,7 @@
+# TODO: Remove before creating package
 library(inline)
 library(Rcpp)
+
 #' Computes the hash code of an arbitrary object.
 #'
 #' Computes the hash code of an object. The default implementation serializes the object and computes the
@@ -25,6 +27,7 @@ hash_code.default <- function(x) {
   }
 }
 
+# TODO: Move into src/
 combine_hash <- cppFunction('int32_t combine_hash(const NumericVector x) {
                               if (x.size() == 0) return 0;
                               int32_t h = 0;
@@ -35,6 +38,7 @@ combine_hash <- cppFunction('int32_t combine_hash(const NumericVector x) {
                             ',
                                includes=c('#include <stdint.h>'))
 
+# TODO: Move into src/
 hash_code_numeric <- cppFunction('int32_t hash_i(const NumericVector x) {
                                     int32_t seed = x.size();
 
@@ -373,6 +377,8 @@ hashset <- function(..., items=list(...), capacity=1024) {
 is_hashset <- function(set) {
   is_hash(set) && set@.type == 'set'
 }
+
+
 
 #' @export
 as_hashset <- function(list) {
