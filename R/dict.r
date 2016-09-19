@@ -122,6 +122,12 @@ default <- function(dict) {
   dict
 }
 
+#' @export
+dict_from <- function(keys, fn) {
+  fn <- purrr::as_function(fn)
+  make_dict(keys, map(fn, keys))
+}
+
 #' Create a new dictionary from a list or vector of keys and values
 #'
 #' Create a new dictionary from separate keys and values.
@@ -218,12 +224,13 @@ NULL
 #' @export
 `[[.dict` <- function(dict, key) {
   if (is.character(key) && length(key) == 1) {
-    v <- unclass(dict)[[key]] %||% attr(dict, 'default')
-    if (is.null(v) && ! is.null(attr(dict, 'strict'))) {
-      stop('Attempted access of non-existing key', key)
-    } else {
+    v <- NextMethod(exact=TRUE)
+    if (! is.null(v)) {
       v
-    }
+    } else if (!is.null(attr(dict, 'strict'))) {
+      stop('Attempted access of non-existing key', key)
+    } else
+      attr(dict, 'default')
   } else {
     stop('Only a single character key allowed.')
   }
@@ -231,23 +238,24 @@ NULL
 
 #' @export
 #' @rdname dict_operators
-`$.dict` <- `[[.dict`
+`$.dict` <- function(dict, key) {
+  dict[[key]]
+}
 
 #' @export
 #' @rdname dict_operators
 `$<-.dict` <- function(dict, key, value) {
-  if (!is.character(key)) {
+  if (!is.character(key))
     stop('Only character keys allowed.')
-  }
-
-  keys <- keys(dict)
 
   if (! is.null(value)) {
-    dict <- unclass(dict)
+    cl <- class(dict)
+    class(dict) <- NULL
     dict[[key]] <- value
-    class(dict) <- c('dict', 'list')
-    return(dict)
+    class(dict) <- cl
+    dict
   } else {
+    keys <- keys(dict)
     if (! key %in% keys) {
       keys <- c(keys, key)
       dict <- c(dict, list(NULL))
@@ -344,10 +352,11 @@ omit <- function(dict, ...) {
 #' @export
 omit.list <- function(dict, ...) {
   keys <- c(...)
-  if (!is.character(keys))
-    stop('Only character keys allowed')
 
-  keys <- setdiff(keys(dict), keys)
+    if (!is.character(keys))
+      stop('Only character keys allowed')
+
+  keys <- c(setdiff(keys(dict), keys), except)
   dict[keys]
 }
 
@@ -418,12 +427,21 @@ defaults.list <- function(x, defaults) {
 #' @return a character vector containing the keys of the dictionary
 #' @export
 keys <- function(dict) {
+  UseMethod('keys', dict)
+}
+
+#' @export
+keys.list <- function(dict) {
   unique(names(dict))
 }
 
 #' @rdname keys
 #' @export
-`keys<-` <- `names<-`
+`keys<-` <- function(dict, value) {
+  UseMethod('keys<-', dict)
+}
+
+`keys<-.list` <- `names<-`
 
 #' Returns or assigns the values of the provided dictionary.
 #'
@@ -431,6 +449,11 @@ keys <- function(dict) {
 #' @return a list containing the values of the dictionary
 #' @export
 values <- function(dict) {
+  UseMethod('values', dict)
+}
+
+#' @export
+values.list <- function(dict) {
   unname(unclass(dict))
 }
 
@@ -461,7 +484,8 @@ values <- function(dict) {
 #'              keep(function(e) e$value <= 1) %>%
 #'              collect()
 entries <- function(dict) {
-  structure(map_dict(dict, entry), class=c('entries', 'list'))
+  structure(purrr::map2(keys(dict), values(dict), entry),
+            class=c('entries', 'list'))
 }
 
 #' @export
@@ -475,9 +499,6 @@ entries <- function(dict) {
 #' @param value the value
 #' @export
 entry <- function(key, value) {
-  if (!is.character(key))
-    stop('Key should be character')
-
   structure(list(key=key, value=value), class=c('entry', 'list'))
 }
 
@@ -515,21 +536,6 @@ print_kv <- function(key, value, key_width=NULL, digits=digits) {
   } else {
     cat('\n')
   }
-}
-
-#' @export
-print.entry <- function(entry) {
-  print(unclass(entry))
-}
-
-#' @export
-print.entries <- function(entries) {
-  if (length(entries) == 0)
-    return()
-
-  key_width <- min(30, max(purrr::map_int(entries, ~ stringr::str_length(.x$key)), na.rm=TRUE))
-  for (entry in entries)
-    print_kv(entry$key, entry$value, key_width=key_width)
 }
 
 #' Prints the contents of a dictionary
@@ -615,7 +621,6 @@ compact_dict <- function(dict) {
   discard_dict(dict, function(k, v) is.null(v))
 }
 
-
 #' Inverts a dictionary
 #'
 #' Returns a dictionary where keys and values are swapped. Values are coerced to character
@@ -626,6 +631,11 @@ compact_dict <- function(dict) {
 #'
 #' @export
 invert <- function(dict) {
+  UseMethod('invert', dict)
+}
+
+#' @export
+invert.dict <- function(dict) {
   make_dict(as.character(values(dict)),
             keys(dict))
 }
@@ -652,6 +662,11 @@ detect_key <- function(dict, .p, ..., .right=FALSE) {
 #' @param keys a character vector of keys
 #' @export
 has <- function(dict, keys) {
+  UseMethod('has', dict)
+}
+
+#' @export
+has.list <- function(dict, keys) {
   keys %in% keys(dict)
 }
 
@@ -664,6 +679,11 @@ has <- function(dict, keys) {
 #' @return a copy of the collection, marked as immutable
 #' @export
 immutable <- function(coll) {
+  UseMethod('immutable')
+}
+
+#' @export
+immutable.default <- function(coll) {
   class(coll) <- c('immutable', class(coll))
   coll
 }
@@ -673,6 +693,11 @@ immutable <- function(coll) {
 #' @return TRUE if immutable, FALSE otherwise
 #' @export
 is_immutable <- function(coll) {
+  UseMethod('is_immutable', coll)
+}
+
+#' @export
+is_immutable.default <- function(coll) {
   inherits(coll, 'immutable') && class(coll)[1] == 'immutable'
 }
 
@@ -690,6 +715,5 @@ is_immutable <- function(coll) {
 #' @export
 print.immutable <- function(x, ...) {
   cat('(immutable collection)\n')
-  class(x) <- setdiff(class(x), 'immutable')
   NextMethod(x)
 }

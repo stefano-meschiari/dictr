@@ -9,9 +9,11 @@ Description: Provides an implementation of a dictionary class with character key
   and ability to store NULLs.
 License: MIT
 LazyData: TRUE
+ByteCompile: TRUE
 Imports:
     purrr,
-    stringr
+    stringr,
+    lazyeval
 RoxygenNote: 5.0.1
 Suggests: knitr,
     rmarkdown,
