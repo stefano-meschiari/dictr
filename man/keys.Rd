@@ -7,7 +7,7 @@
 \usage{
 keys(dict)
 
-keys() <- value
+keys(dict) <- value
 }
 \arguments{
 \item{dict}{a dictionary}

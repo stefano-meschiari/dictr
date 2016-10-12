@@ -90,3 +90,9 @@ test_that('purrr functions work as specified', {
   expect_identical(discard_dict(y, ~ .y < 5), dict(c=9, d=16))
   expect_identical(compact_dict(z), dict(name='John', last_name='Smith'))
 })
+
+test_that('Matching is always exact', {
+  x <- dict(my_long_key = 1)
+  expect_null(x$my)
+  expect_identical(x$my_long_key, 1)
+})
