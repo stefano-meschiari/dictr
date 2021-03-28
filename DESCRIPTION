@@ -1,8 +1,8 @@
-Package: dict
+Package: dictr
 Type: Package
 Title: A dictionary class for R
-Version: 0.6
-Date: 2016-08-07
+Version: 0.7.0
+Date: 2021-03-21
 Authors@R: person("Stefano", "Meschiari", email="stefano.meschiari@gmail.com", role=c("aut", "cre"))
 Description: Provides an implementation of a dictionary class with character keys. It offers several
   features over named lists, including unique keys, no partial matching, compact printing, default values,
@@ -12,8 +12,10 @@ LazyData: TRUE
 Imports:
     purrr,
     stringr
-RoxygenNote: 5.0.1
+RoxygenNote: 7.1.1
 Suggests: knitr,
     rmarkdown,
     testthat
 VignetteBuilder: knitr
+Language: en-US
+Encoding: UTF-8

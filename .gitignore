@@ -13,3 +13,15 @@ vignettes/*.html
 vignettes/*.pdf
 .Rproj.user
 README.Rmd
+
+.Rhistory
+.Rproj.user
+.*
+*.Rcheck*
+inst/doc
+cran-comments.md
+doc
+Meta
+cran-comments.md
+*.tar.gz
+man

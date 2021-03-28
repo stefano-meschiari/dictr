@@ -55,14 +55,14 @@ test_that('dollar, bracket and double bracket operators work correctly', {
 })
 
 test_that('equality works as expected', {
-  x <- dict(a=1, b=2, c=3)
-  y <- dict(a=3, b=2, c=1)
+  x <- dict(a=1, b=2, c=3, d=NULL)
+  y <- dict(a=3, b=2, c=1, d=NULL)
   expect_identical(x == y,
-                   c(a=FALSE, b=TRUE, c=FALSE))
+                   c(a=FALSE, b=TRUE, c=FALSE, d=TRUE))
 
-  z <- dict(a=1, b=2, c=NULL, d=4)
+  z <- dict(a=1, b=2, c=NULL, d=NULL, e=10)
   expect_equal(x == z,
-                   c(a=TRUE, b=TRUE, c=FALSE, d=FALSE))
+                   c(a=TRUE, b=TRUE, c=FALSE, d=TRUE, e=NA))
 })
 
 test_that('omit removes keys', {
@@ -77,7 +77,7 @@ test_that('extend and defaults work as specified', {
   y <- dict(a=10, b=20, c=30)
 
   expect_identical(extend(x, y), dict(a=10, b=20, d=4, c=30))
-  expect_identical(defaults(x, y), dict(a=1, b=2, d=4, c=30))
+  expect_identical(defaults(x, y), dict(a=1, b=2, c=30, d=4))
 })
 
 test_that('purrr functions work as specified', {
@@ -95,4 +95,9 @@ test_that('Matching is always exact', {
   x <- dict(my_long_key = 1)
   expect_null(x$my)
   expect_identical(x$my_long_key, 1)
+})
+
+test_that("Rename works as specified", {
+  x <- dict(a=1, b=2, c=3)
+  expect_identical(rename_keys(x, A='a'), dict(A=1, b=2, c=3))
 })
