@@ -14,7 +14,7 @@ and import the library with `library`:
 library(dictr)
 ```
 
-# A proper dictionary class
+# `dict`: a dictionary class
 
 In R, the typical way to store dictionaries is to use *named lists*:
 
