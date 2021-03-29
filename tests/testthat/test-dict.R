@@ -49,8 +49,16 @@ test_that('dollar, bracket and double bracket operators work correctly', {
   expect_identical(d$origin, 'center')
   d$null2 <- NULL
   expect_identical(d$null2, NULL)
-  d[c('pattern', 'new_key')] <- list('dashed', 'set')
+
+  # set multiple values at once
+  d <- dict(pattern="dotted")
+  d[c('pattern', 'new_key')] <- c('dashed', 'set')
   expect_identical(d[c('pattern', 'new_key')],
+                   dict(pattern='dashed', new_key='set'))
+
+  d <- dict(pattern="dotted")
+  d['pattern', 'new_key'] <- c('dashed', 'set')
+  expect_identical(d['pattern', 'new_key'],
                    dict(pattern='dashed', new_key='set'))
 })
 
@@ -100,4 +108,26 @@ test_that('Matching is always exact', {
 test_that("Rename works as specified", {
   x <- dict(a=1, b=2, c=3)
   expect_identical(rename_keys(x, A='a'), dict(A=1, b=2, c=3))
+})
+
+test_that("Get or else works as specified", {
+  x <- dict(a=1, b=NULL)
+  expect_identical(get_or_else(x, "a", "default"), 1)
+  expect_identical(get_or_else(x, "b", "default"), NULL)
+  expect_identical(get_or_else(x, "c", "default"), "default")
+})
+
+test_that("make_dict with a function argument works as specified", {
+  x <- c("a", "b")
+  expect_identical(make_dict(x, ~ paste0(.x, .x)),
+                   dict(a="aa", b="bb"))
+})
+
+test_that("Looping over entries works as specified", {
+  x <- dict(a=1, b=2, c=3)
+  filtered <- entries(x) %>%
+    purrr::map(~ entry(.$key, .$value * 2)) %>%
+    as_dict()
+
+  expect_identical(filtered, dict(a=2, b=4, c=6))
 })

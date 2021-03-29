@@ -48,7 +48,7 @@ To remove a key, use the \link{omit} function.
 Finally, printing of dicts is more compact that printing named lists.
 
 Dictionaries are implemented using named lists, so they can be passed to functions that
-expect lists.
+expect lists. They maintain keys in insertion order.
 
 \code{default_dict} creates a dictionary with default values. When the user accesses a
 non-existing key, the default value will be returned instead of \code{NULL}.

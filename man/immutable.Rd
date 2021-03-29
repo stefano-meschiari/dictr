@@ -2,9 +2,12 @@
 % Please edit documentation in R/immutable.R
 \name{immutable}
 \alias{immutable}
+\alias{mutable}
 \title{Transforms any collection into an immutable collection.}
 \usage{
 immutable(coll)
+
+mutable(coll)
 }
 \arguments{
 \item{coll}{collection to be made immutable}
@@ -15,4 +18,14 @@ a copy of the collection, marked as immutable
 \description{
 Returns a copy of the collection that cannot be modified using the bracket, double bracket
 or dollar operators.
+}
+\details{
+\code{mutable} will make an immutable collection mutable again.
+}
+\examples{
+a <- list(1, 2, 3)
+a[[1]] <- 2  # ok
+
+a <- immutable(a)
+# a[[1]] <- 2  will throw an error
 }

@@ -1,39 +1,59 @@
 ---
-title: "niceR"
+title: "dictr: A new dictionary class for R"
 author: "Stefano Meschiari"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{dictr: A new dictionary class for R}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-`dict` provides a new data structure specialized for representing dictionaries with string keys. 
+```{r, setup, include=FALSE}
+library(dictr)
+library(purrr)
+```
+`dictr` provides a new data structure specialized for representing dictionaries with string keys. 
 
 Install the package using [devtools](http://cran.r-
 project.org/package=devtools):
 ```{r, eval=FALSE}
-devtools::install_github('stefano-meschiari/dict')
+devtools::install_github('stefano-meschiari/dictr')
 ```
 and import the library with `library`:
 ```{r, eval=FALSE}
-library(dict)
+library(dictr)
 ```
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-library(dict)
-```
+
 
 # A proper dictionary class
-The new class `dict` can be used to represent a heterogeneous dictionary with character keys. `dict`s have a few advantages over named lists:
+In R, the typical way to store dictionaries is to use *named lists*:
+```{r}
+my_dict <- list(color='blue', pattern='solid', width=3)
+my_dict$color 
+```
 
-- Every value is uniquely associated with a key (no holes).
+Unfortunately, named lists have a host of issues when used to represent 
+dictionaries: among others... 
+
+* they can mix character and integer keys;
+* they will do *partial matching*: by default (`my_dict$co` will also return `blue`, since it partially matches the key `color`);
+* keys can be missing, non-unique, `NA`.
+
+The new class `dict` can be used to explicitly model a dictionary with character keys. 
+`dict`s have a few advantages over named lists:
+
+- Every value is uniquely associated with a string key (no holes).
 - Keys are unique and cannot be repeated.
+- Keys are never partially matched (a key named `test` will not match with `t` 
+  or `te`).
 - Printing of dicts is more compact.
-- Keys are never partially matched (a key named `test` will not match with `t` or `te`).
 - A dict can have default values for non-existing keys.
 - Dicts can contain NULL values.
 
-This library also provides some useful functions for manipulating dictionary-like objects.
+Unlike other packages, `dict` uses regular lists under the hood.
+
+This library also provides a rich library of useful functions for manipulating 
+dictionary-like objects.
 
 ## Creating a dictionary
 The `dict` function can be used to create a new dictionary:
@@ -47,7 +67,7 @@ d <- make_dict(keys=c('color', 'pattern', 'width'),
                values=c('blue', 'solid', 3))
 ```
 
-You can convert a named list to a dictionary using `as.dict`:
+You can convert a named list to a dictionary using `as_dict`:
 ```{r}
 d <- as_dict(list(color='blue', pattern='solid', width=3))
 ```
@@ -57,7 +77,8 @@ Printing looks nice:
 print(d)
 ```
 
-You can use a shorthand and leave keys implicit (this is similar to the ES6 object literal shorthand). `dict` will try to create implicit keys based on the arguments:
+You can use a shorthand syntax that creates implicit keys based on the name of 
+the variables:
 
 ```{r}
 operating_system <- 'Amiga OS'
@@ -70,13 +91,16 @@ print(machine)
 ```
 
 ## Accessing entries
+
 You can access values using the familiar R syntax for lists:
+
 ```{r, eval=FALSE}
 d <- dict(color='blue', pattern='solid', width=3)
 
 d$color                   # blue
 d[['pattern']]            # solid
-d['color', 'pattern']  # a sub-dictionary with keys color and pattern
+d[c('color', 'pattern')]  # a sub-dictionary with keys color and pattern
+d['color', 'pattern']     # a sub-dictionary with keys color and pattern
 ```
 
 You can get keys and values using the `keys` and `values` functions:
@@ -85,14 +109,26 @@ keys(d)      # c('color', 'pattern', 'width')
 values(d)    # list('blue', 'solid', 3)
 ```
 
-You can get a list of "entries" (each element being a list with `key` and `value`). This is useful for iteration:
+You can get a list of "entries" (each element being a tuple with `key` and `value`) 
+using the `entries` and `entry` functions. This is useful for iteration:
 ```{r, eval=FALSE}
 for (entry in entries(d)) {
   cat(entry$key, ' = ', entry$value)
 }
 ```
 
-You can use the `map_dict` function to map over keys and values, and the `keep_dict` and `discard_dict` to filter entries. These functions are specializations of the `map`, `keep` and `discard` family of functions in [purrr](https://github.com/hadley/purrr) to the dictionary class.
+or to conveniently using apply-style functions:
+```{r}
+d <- dict(a=1, b=2, c=3)
+
+d %>%
+  entries() %>%
+  map(~ entry(.$key, .$value^2)) %>%
+  as_dict()
+```
+
+For convenience, you can use the `map_dict` function to map over keys and values, and the `keep_dict` and `discard_dict` to filter entries. These functions are specializations of the `map`, `keep` and `discard` family of functions in [purrr](https://purrr.tidyverse.org) that
+take a dictionary and return a dictionary.
 
 ```{r, eval=FALSE}
 # Returns a dict with the same keys and squared values
@@ -106,12 +142,14 @@ Entries can be set just like regular lists:
 
 ```r
 d <- dict(first='Harrison', last='Solo')  # first=Harrison, last=Solo
+
 d$last <- 'Ford'                          # first=Harrison, last=Ford
 d[['first']] <- 'Leia'                    # first=Leia, last=Ford
-d[c('last', 'title')] <- c('Organa', 'Princess') # first=Leia, last=Organa, title=Princess
+d['last', 'title'] <- c('Organa', 'Princess') # first=Leia, last=Organa, title=Princess
 ```
 
 Setting an entry to `NULL` does _not_ delete the entry, but instead sets the entry to `NULL`. To delete one or more entries, use the `omit` function:
+
 ```r
 d <- dict(a=1, c=3)
 d$b <- NULL         # a=1, b=NULL, c=3

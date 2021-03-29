@@ -1,4 +1,3 @@
 library(testthat)
-library(dict)
 
-test_check("dict")
+test_check("dictr")

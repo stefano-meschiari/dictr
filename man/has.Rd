@@ -12,5 +12,5 @@ has(dict, keys)
 \item{keys}{a character vector of keys}
 }
 \description{
-
+Check whether a dictionary contains the specified key(s)
 }

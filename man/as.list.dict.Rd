@@ -4,10 +4,12 @@
 \alias{as.list.dict}
 \title{Coerces the dictionary to a named list}
 \usage{
-\method{as.list}{dict}(dict)
+\method{as.list}{dict}(x, ...)
 }
 \arguments{
-\item{dict}{dictionary}
+\item{x}{dictionary}
+
+\item{...}{ignored}
 }
 \value{
 a named list with the same keys and values

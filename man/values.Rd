@@ -11,9 +11,12 @@ values(dict) <- value
 }
 \arguments{
 \item{dict}{a dictionary}
+
+\item{value}{new values}
 }
 \value{
-a list containing the values of the dictionary
+a list containing the values of the dictionary, or the updated
+  dictionary
 }
 \description{
 Returns or assigns the values of the provided dictionary.

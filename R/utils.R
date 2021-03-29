@@ -35,7 +35,6 @@ detect_key <- function(dict, .p, ..., .right=FALSE) {
 
 #' Check whether a dictionary contains the specified key(s)
 #'
-#' Equivalent to \code{key %in% keys(dict)}.
 #' @param dict a dictionary
 #' @param keys a character vector of keys
 #' @export

@@ -6,8 +6,7 @@ Date: 2021-03-21
 Authors@R: person("Stefano", "Meschiari", email="stefano.meschiari@gmail.com", role=c("aut", "cre"))
 Description: Provides an implementation of a dictionary class with character keys. It offers several
   features over named lists, including unique keys, no partial matching, compact printing, default values,
-  and ability to store NULLs.
-License: MIT
+  a rich set of utility functions, and the ability to store NULLs.
 LazyData: TRUE
 Imports:
     purrr,
@@ -19,3 +18,4 @@ Suggests: knitr,
 VignetteBuilder: knitr
 Language: en-US
 Encoding: UTF-8
+License: MIT + file LICENSE

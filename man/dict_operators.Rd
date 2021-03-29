@@ -25,9 +25,11 @@
 \arguments{
 \item{dict}{object from which to access value(s) or in which to replace value(s)}
 
-\item{key, }{... index or indices specifying the value to access or replace}
+\item{key}{index or indices specifying the value to access or replace}
 
 \item{value}{list or vector of value(s) to replace}
+
+\item{...}{additional keys}
 }
 \description{
 Access or replace one or multiple values of a dictionary using keys.

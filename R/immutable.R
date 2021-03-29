@@ -3,9 +3,17 @@
 #' Returns a copy of the collection that cannot be modified using the bracket, double bracket
 #' or dollar operators.
 #'
+#' \code{mutable} will make an immutable collection mutable again.
+#'
 #' @param coll collection to be made immutable
 #' @return a copy of the collection, marked as immutable
 #' @export
+#' @examples
+#' a <- list(1, 2, 3)
+#' a[[1]] <- 2  # ok
+#'
+#' a <- immutable(a)
+#' # a[[1]] <- 2  will throw an error
 immutable <- function(coll) {
   UseMethod('immutable')
 }
@@ -13,6 +21,19 @@ immutable <- function(coll) {
 #' @export
 immutable.default <- function(coll) {
   class(coll) <- c('immutable', class(coll))
+  coll
+}
+
+#' @export
+#' @rdname immutable
+mutable <- function(coll) {
+  UseMethod('mutable')
+}
+
+#' @export
+mutable.default <- function(coll) {
+  cl <- class(coll)
+  class(coll) <- cl[cl != "immutable"]
   coll
 }
 
@@ -30,7 +51,7 @@ is_immutable.default <- function(coll) {
 }
 
 #' @export
-`[<-.immutable` <- function(...) {
+`[<-.immutable` <- function(x, key, value) {
   stop('Attempting to mutate an immutable collection.')
 }
 
@@ -43,5 +64,7 @@ is_immutable.default <- function(coll) {
 #' @export
 print.immutable <- function(x, ...) {
   cat('(immutable collection)\n')
+  cl <- class(x)
+  class(x) <- cl[cl != "immutable"]
   NextMethod(x)
 }

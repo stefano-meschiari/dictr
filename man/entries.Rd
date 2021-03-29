@@ -22,12 +22,13 @@ the \link{as_dict} function. This function can be useful to loop over a
 dictionary using \code{for} or one of the \code{purrr::map} functions.
 }
 \examples{
+library(purrr)
 solar_system <- dict(Mercury = 0.387, Venus = 0.723, Earth = 1, Mars = 1.524)
 for (e in entries(solar_system))
    cat('The distance between planet', e$key, ' and the Sun is', e$value, ' AU.\n')
 
 inner_solar_system <- entries(solar_system) \%>\%
-             keep(function(e) e$value <= 1) \%>\%
+             keep(function(e) e$value <= solar_system$Mars) \%>\%
              as_dict()
 
 semi_major_axes <- purrr::map_dbl(entries(solar_system), "value")

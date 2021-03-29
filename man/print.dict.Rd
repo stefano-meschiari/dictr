@@ -4,12 +4,12 @@
 \alias{print.dict}
 \title{Prints the contents of a dictionary}
 \usage{
-\method{print}{dict}(x, digits = NULL)
+\method{print}{dict}(x, ...)
 }
 \arguments{
 \item{x}{dictionary}
 
-\item{digits}{minimal number of significant digits}
+\item{...}{other parameters forwarded to print()}
 }
 \description{
 Prints the contents of a dictionary

@@ -2,16 +2,19 @@
 % Please edit documentation in R/dict.R
 \name{as_dict}
 \alias{as_dict}
+\alias{as.dict}
 \title{Coerces an object to a dictionary}
 \usage{
 as_dict(obj)
+
+as.dict(obj)
 }
 \arguments{
-\item{obj}{a named list or vector.}
+\item{obj}{a named list or vector, or a list of \code{entry} tuples.}
 }
 \value{
 a dictionary containing the same keys and values as the input object.
 }
 \description{
-Coerces a named list, a vector, or a list of \link{entries} to a dictionary.
+Coerces a named list, a vector, or a list of \link{entry} tuple, to a dictionary.
 }

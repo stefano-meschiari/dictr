@@ -4,10 +4,10 @@
 \alias{length.dict}
 \title{Get the length of the dictionary}
 \usage{
-\method{length}{dict}(dict)
+\method{length}{dict}(x)
 }
 \arguments{
-\item{dict}{a dictionary object}
+\item{x}{a dictionary object}
 }
 \value{
 the number of unique keys stored in the dictionary.

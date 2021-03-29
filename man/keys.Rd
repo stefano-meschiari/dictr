@@ -11,6 +11,8 @@ keys(dict) <- value
 }
 \arguments{
 \item{dict}{a dictionary}
+
+\item{value}{new keys to assign}
 }
 \value{
 a character vector containing the keys of the dictionary

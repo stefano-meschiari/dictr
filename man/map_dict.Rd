@@ -20,10 +20,12 @@ compact_dict(x)
 
 \item{.f}{A function, formula or character vector.}
 
-\item{.p}{A predicate function returning a logical value.
+\item{...}{Optional parameters to pass to \code{.f} or \code{.p}
 If a function, it is called with two arguments, the key and the value.
 If a formula, .x corresponds to the key and .y to the value.
 If a character vector, it will return the values corresponding to the keys in the vector.}
+
+\item{.p}{A predicate function returning a logical value.}
 }
 \value{
 For \code{map_dict}, a dictionary with the same keys as \code{dict}, and values

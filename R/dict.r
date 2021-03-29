@@ -71,8 +71,6 @@ dict <- function(...) {
   as_dict(data)
 }
 
-`%||%` <- purrr::`%||%`
-
 #' @rdname dict
 #' @export
 default_dict <- function(..., .default=NULL) {
@@ -133,8 +131,8 @@ default <- function(dict) {
 #' employee <- make_dict(c('name', 'age'), list('John', 60))
 make_dict <- function(keys, values, default=NULL, strict=FALSE) {
   dict <- if (purrr::is_function(values) || purrr::is_formula(values)) {
-    fn <- purrr::as_function(values)
-    as_dict(keys, purrr::map(keys, fn))
+    fn <- purrr::as_mapper(values)
+    make_dict(keys, purrr::map(keys, fn))
   } else {
     as_dict(purrr::set_names(values, keys))
   }
@@ -149,12 +147,12 @@ make_dict <- function(keys, values, default=NULL, strict=FALSE) {
 #'
 #' Returns the number of unique keys in the dictionary.
 #'
-#' @param dict a dictionary object
+#' @param x a dictionary object
 #'
 #' @return the number of unique keys stored in the dictionary.
 #' @export
-length.dict <- function(dict) {
-  length(keys(dict))
+length.dict <- function(x) {
+  length(keys(x))
 }
 
 #' Tests whether the object is a dictionary.
@@ -168,21 +166,33 @@ is_dict <- function(obj) {
 
 #' Coerces an object to a dictionary
 #'
-#' Coerces a named list, a vector, or a list of \link{entries} to a dictionary.
+#' Coerces a named list, a vector, or a list of \link{entry} tuple, to a dictionary.
 #'
-#' @param obj a named list or vector.
+#' @param obj a named list or vector, or a list of \code{entry} tuples.
 #' @return a dictionary containing the same keys and values as the input object.
 #'
 #' @export
 as_dict <- function(obj) {
   if (is_dict(obj))
     return(obj)
+  if (length(obj) == 0) {
+    return(structure(list(), class=c('dict', 'list')))
+  }
 
-  if (inherits(obj, 'entries')) {
+  is_entry <- function(x) {
+    all(c("key", "value") %in% names(x)) &&
+      is.character(x[["key"]])
+  }
+
+  # obj is a list of entry() objects
+  is_list_of_entries <- is.list(obj) &&
+    all(purrr::map_lgl(obj, is_entry))
+
+  if (is_list_of_entries) {
     names <- purrr::map_chr(obj, 'key')
     values <- purrr::map(obj, 'value')
     obj <- purrr::set_names(values, names)
-  } else if (inherits(obj, 'entry')) {
+  } else if (is_entry(obj)) {
     obj <- purrr::set_names(obj$value, obj$key)
   }
 
@@ -197,14 +207,18 @@ as_dict <- function(obj) {
   structure(obj[names(obj)], class=c('dict', 'list'))
 }
 
+#' @export
+#' @rdname as_dict
+as.dict <- as_dict
+
 #' Coerces the dictionary to a named list
 #'
-#' @param dict dictionary
-#'
+#' @param x dictionary
+#' @param ... ignored
 #' @return a named list with the same keys and values
 #' @export
-as.list.dict <- function(dict) {
-  unclass(dict)
+as.list.dict <- function(x, ...) {
+  unclass(x)
 }
 
 #' @export
@@ -213,7 +227,6 @@ defaults <- function(x, defaults) {
   UseMethod('defaults', x)
 }
 
-#' @export
 defaults.list <- function(x, defaults) {
   missing_keys <- setdiff(names(defaults), names(x))
   x[missing_keys] <- defaults[missing_keys]
@@ -223,6 +236,7 @@ defaults.list <- function(x, defaults) {
 #' Returns or assigns the keys of the provided dictionary.
 #'
 #' @param dict a dictionary
+#' @param value new keys to assign
 #' @return a character vector containing the keys of the dictionary
 #' @export
 keys <- function(dict) {
@@ -244,9 +258,7 @@ keys.dict <- keys.list
 
 #' @export
 `keys<-.list` <- function(dict, value) {
-  assert_unique_keys(value)
-  names(dict) <- value
-  dict
+  `names<-.dict`(dict, value)
 }
 
 #' @export
@@ -255,7 +267,9 @@ keys.dict <- keys.list
 #' Returns or assigns the values of the provided dictionary.
 #'
 #' @param dict a dictionary
-#' @return a list containing the values of the dictionary
+#' @param value new values
+#' @return a list containing the values of the dictionary, or the updated
+#'   dictionary
 #' @export
 values <- function(dict) {
   UseMethod('values', dict)
@@ -286,12 +300,13 @@ values.list <- function(dict) {
 #' dictionary.
 #' @export
 #' @examples
+#' library(purrr)
 #' solar_system <- dict(Mercury = 0.387, Venus = 0.723, Earth = 1, Mars = 1.524)
 #' for (e in entries(solar_system))
 #'    cat('The distance between planet', e$key, ' and the Sun is', e$value, ' AU.\n')
 #'
 #' inner_solar_system <- entries(solar_system) %>%
-#'              keep(function(e) e$value <= 1) %>%
+#'              keep(function(e) e$value <= solar_system$Mars) %>%
 #'              as_dict()
 #'
 #' semi_major_axes <- purrr::map_dbl(entries(solar_system), "value")
@@ -301,9 +316,11 @@ entries <- function(dict) {
 }
 
 #' @export
-`names<-.dict` <- function(dict, value) {
-  attr(dict, 'names') <- unique(value)
-  dict
+`names<-.dict` <- function(x, value) {
+  assert_keys_and_values_same_length(value, x)
+  assert_unique_keys(value)
+  attr(x, 'names') <- value
+  x
 }
 
 #' Returns a list with elements \code{key} and \code{value}.
@@ -314,7 +331,11 @@ entry <- function(key, value) {
   structure(list(key=key, value=value), class=c('entry', 'list'))
 }
 
-print_kv <- function(key, value, key_width=NULL, digits=digits) {
+#' @importFrom purrr %||%
+purrr::`%||%`
+
+print_kv <- function(key, value, key_width=NULL, ...) {
+
   screen_width <- getOption('width')
   tc <- textConnection('printentry', 'w')
   on.exit({ options(width=screen_width); close(tc) })
@@ -325,13 +346,14 @@ print_kv <- function(key, value, key_width=NULL, digits=digits) {
   }
 
   key <- stringr::str_c('$ ', as.character(key))
-  cat(stringr::str_trunc(key, key_width), ' : ', sep='')
+  padded_key <- stringr::str_pad(stringr::str_trunc(key, key_width), key_width)
+  cat(padded_key, ' : ', sep='')
 
   new_width <- screen_width - key_width - 6
 
   options(width=new_width)
   sink(tc)
-  tryCatch({print(value, digits=digits)}, finally={sink(NULL)})
+  tryCatch({print(value, ...)}, finally={sink(NULL)})
 
   val <- textConnectionValue(tc)
   if (length(val) > 0) {
@@ -347,10 +369,10 @@ print_kv <- function(key, value, key_width=NULL, digits=digits) {
 #' Prints the contents of a dictionary
 #'
 #' @param x dictionary
-#' @param digits minimal number of significant digits
+#' @param ... other parameters forwarded to print()
 #'
 #' @export
-print.dict <- function(x, digits=NULL) {
+print.dict <- function(x, ...) {
   if (length(x) == 0) {
     cat('(empty dictionary)\n')
     return()
@@ -359,7 +381,7 @@ print.dict <- function(x, digits=NULL) {
   n <- 1
   key_width <- min(30, max(stringr::str_length(keys(x)), na.rm=TRUE))
   for (key in keys(x)) {
-    print_kv(key, x[[key]], key_width=key_width, digits=digits)
+    print_kv(key, x[[key]], key_width=key_width, ...)
     n <- n+1
     if (n > getOption('max.print')) {
       cat(sprintf('[ reached getOption("max.print") -- omitted %d entries. ]', length(x)-n))
@@ -369,18 +391,13 @@ print.dict <- function(x, digits=NULL) {
   invisible(x)
 }
 
-#' Display structure of dictionary
-#'
-#' See \link[utils]{str}.
-#' @param dict a dictionary
-#' @param ... additional parameters passed to \link[utils]{str}
-#'
 #' @export
-str.dict <- function(dict, ...) {
-  cat('Dict with', length(dict), 'keys')
-  if (!is.null(attr(dict, 'default')))
+#' @importFrom utils str
+str.dict <- function(object, ...) {
+  cat('Dict with', length(object), 'keys')
+  if (!is.null(attr(object, 'default')))
     cat(' and default value')
-  cat(', backed by ')
-  str(unclass(dict), ...)
+  cat('\n')
+  str(unclass(object), ...)
 }
 

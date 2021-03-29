@@ -9,7 +9,8 @@
 #' corresponding to that key to \code{NULL} (use \link{omit} to remove entries).
 #'
 #' @param dict object from which to access value(s) or in which to replace value(s)
-#' @param key, ... index or indices specifying the value to access or replace
+#' @param key index or indices specifying the value to access or replace
+#' @param ... additional keys
 #' @param value list or vector of value(s) to replace
 #' @name dict_operators
 NULL
@@ -23,8 +24,9 @@ NULL
       v
     } else if (!is.null(attr(dict, 'strict'))) {
       stop('Attempted access of non-existing key', key)
-    } else
+    } else {
       attr(dict, 'default')
+    }
   } else {
     stop('Only a single character key allowed.')
   }
@@ -87,14 +89,16 @@ NULL
 #' @rdname dict_operators
 `[<-.dict` <- function(dict, ..., value) {
   keys <- c(...)
-  if (!is.character(keys))
+  if (!is.character(keys)) {
     stop('Only character keys allowed.')
-  if (length(unique(keys)) > length(value))
+  }
+  if (length(unique(keys)) > length(value)) {
     stop('Not enough values for the specified keys.')
-
-  if (! is.null(keys(value))) {
-    for (key in keys)
+  }
+  if (! is.null(names(value))) {
+    for (key in keys) {
       dict[[key]] <- value[[key]]
+    }
   } else {
     for (i in seq_along(keys))
       dict[[keys[i]]] <- value[[i]]
@@ -139,9 +143,9 @@ NULL
 #' Checks if two dictionaries are the same mapping.
 #' Unlike \code{identical}, key ordering is ignored.
 #'
-#' @param x Two dictionaries
-#' @param y
-#'
+#' @param x Dictionary
+#' @param y Second dictionary to compare to
+#' @return TRUE if the two dictionaries have the same keys and the same values
 #' @export
 equal <- function(x, y) {
   if (!is_dict(x)) {
