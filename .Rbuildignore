@@ -4,6 +4,5 @@
 ^Meta$
 ^CRAN-RELEASE$
 README_files
-README.rmd
-README.md
+README.*
 cran-comments.md
