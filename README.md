@@ -110,20 +110,21 @@ d[c('color', 'pattern')]  # a sub-dictionary with keys color and pattern
 d['color', 'pattern']     # a sub-dictionary with keys color and pattern
 ```
 
-You can get keys and values using the `keys` and `values` functions:
+You can get keys and values using the `keys` and `values` functions
+(`keys` is a synonym for `names`):
 
 ``` r
 keys(d)      # c('color', 'pattern', 'width')
 values(d)    # list('blue', 'solid', 3)
 ```
 
-You can get a list of “entries” (each element being a tuple with `key`
-and `value`) using the `entries` and `entry` functions. This is useful
-for iteration:
+You can get a list of entries (each element being a tuple with `key` and
+`value`) using the `entries` and `entry` functions. This is useful for
+iteration:
 
 ``` r
 for (entry in entries(d)) {
-  cat(entry$key, ' = ', entry$value)
+  cat(entry$key, ' = ', entry$value, '\n')
 }
 ```
 
@@ -183,7 +184,8 @@ A few utility functions inspired by the Underscore library:
 
 -   `invert(dict)` returns a dictionary where keys and values are
     swapped.
--   `has(dict, key)` returns TRUE if `dict` contains `key`.
+-   `has(dict, key)` returns TRUE if `dict` contains `key` (equivalent
+    to `key %in% keys(dict)`).
 -   `omit(dict, key1, key2, ...)` returns a new dictionary omitting all
     the specified keys.
 -   `extend(dict, dict1, ...)` copies all entries in `dict1` into
@@ -191,6 +193,8 @@ A few utility functions inspired by the Underscore library:
     dictionary.
 -   `defaults(dict, defaults)` fill in entries from `defaults` into
     `dict` for any keys missing in `dict`.
+-   `rename_keys(dict, new_key=old_key, ...)` will rename `old_key` to
+    `new_key`
 
 The following functions specialize functions from the `purrr` library to
 dictionary objects:
