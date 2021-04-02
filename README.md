@@ -16,7 +16,7 @@ library(dictr)
 
 # `dict`: a dictionary class
 
-In R, the typical way to store dictionaries is to use *named lists*:
+In R, the typical way to represent dictionaries is to use *named lists*:
 
 ``` r
 my_dict <- list(color='blue', pattern='solid', width=3)
@@ -29,8 +29,9 @@ Unfortunately, named lists have a host of issues when used to represent
 dictionaries: among others…
 
 -   they can mix character and integer keys;
--   they will do *partial matching*: by default (`my_dict$co` will also
-    return `blue`, since it partially matches the key `color`);
+-   they will do *partial matching* by default (`my_dict$co` will also
+    return `blue`, since it partially matches the key `color`, instead
+    of throwing an error or returning NULL);
 -   keys can be missing, non-unique, `NA`.
 
 The new class `dict` can be used to explicitly model a dictionary with
@@ -44,7 +45,8 @@ character keys. `dict`s have a few advantages over named lists:
 -   A dict can have default values for non-existing keys.
 -   Dicts can contain NULL values.
 
-Unlike other packages, `dict` uses regular lists under the hood.
+Unlike other packages, `dict`s are regular value types that use lists
+under the hood.
 
 This library also provides a rich library of useful functions for
 manipulating dictionary-like objects.
@@ -85,18 +87,15 @@ You can use a shorthand syntax that creates implicit keys based on the
 name of the variables:
 
 ``` r
-operating_system <- 'Amiga OS'
-version <- '3.1'
-cpu <- '68040'
-
-machine <- dict(operating_system, version, cpu)
-
-print(machine)
+compute_models <- function(train_data) {
+  lm_base <- lm(y ~ x1 + x2, train_data)
+  lm_interactions <- lm(y ~ x1 * x2, train_data)
+  lm_log <- lm(y ~ log(x1), train_data)
+  
+  # instead of list(lm_base=lm_base, lm_interactions=lm_interactions, lm_log=lm_log)
+  dict(lm_base, lm_interactions, lm_log)
+}
 ```
-
-    ## $ operating_system : [1] "Amiga OS"
-    ##          $ version : [1] "3.1"
-    ##              $ cpu : [1] "68040"
 
 ## Accessing entries
 
@@ -128,11 +127,12 @@ for (entry in entries(d)) {
 }
 ```
 
-or to conveniently using apply-style functions:
+or to conveniently use purrr map-style functions:
 
 ``` r
 d <- dict(a=1, b=2, c=3)
 
+# square all values in d
 d %>%
   entries() %>%
   map(~ entry(.$key, .$value^2)) %>%

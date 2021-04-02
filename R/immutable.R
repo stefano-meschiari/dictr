@@ -6,7 +6,9 @@
 #' \code{mutable} will make an immutable collection mutable again.
 #'
 #' @param coll collection to be made immutable
-#' @return a copy of the collection, marked as immutable
+#' @return A copy of the collection, marked as immutable. If \code{mutable} is
+#'   called, then a copy of the collection with the immutability flag removed is
+#'   returned.
 #' @export
 #' @examples
 #' a <- list(1, 2, 3)

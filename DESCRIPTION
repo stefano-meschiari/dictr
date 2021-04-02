@@ -1,13 +1,14 @@
 Package: dictr
 Type: Package
-Title: A dictionary class for R
+Title: A Dictionary Class for R
 Version: 0.7.0
 Date: 2021-03-21
 Authors@R: person("Stefano", "Meschiari", email="stefano.meschiari@gmail.com", role=c("aut", "cre"))
 Description: Provides an implementation of a dictionary class with character keys. It offers several
   features over named lists, including unique keys, no partial matching, compact printing, default values,
-  a rich set of utility functions, and the ability to store NULLs.
-LazyData: TRUE
+  a rich set of utility functions, and the ability to store NULL.
+URL: https://github.com/stefano-meschiari/dictr
+BugReports: https://github.com/stefano-meschiari/dictr/issues
 Imports:
     purrr,
     stringr
