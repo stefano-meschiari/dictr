@@ -7,7 +7,7 @@
 \usage{
 values(dict)
 
-values(dict) <- value
+values(dict, values) <- value
 }
 \arguments{
 \item{dict}{a dictionary}
@@ -20,4 +20,9 @@ a list containing the values of the dictionary, or the updated
 }
 \description{
 Returns or assigns the values of the provided dictionary.
+}
+\examples{
+map <- dict(a=1, b=2)
+
+values(map) <- list("A", "B") # now map == dict(a="A", b="B")
 }

@@ -28,10 +28,30 @@ test_that("values equal to NULL can be set", {
   x <- dict()
   x$a <- NULL
   expect_identical(keys(x), 'a')
+  expect_identical(values(x), list(NULL))
 
   x$b <- NULL
   x$c <- 1
+  expect_identical(keys(x), c('a', 'b', 'c'))
   expect_identical(values(x), list(NULL, NULL, 1))
+
+  x$c <- NULL
+  expect_identical(values(x), list(NULL, NULL, NULL))
+})
+
+test_that("Empty string is a valid key", {
+  x <- dict()
+  x[[""]] <- 1
+  expect_identical(x[[""]], 1)
+  expect_identical(x[""], make_dict("", 1))
+
+  x <- make_dict(c("a", "", "b"), c(1, 2, 3))
+  expect_identical(x[c("a", "")], make_dict(c("a", ""), c(1, 2)))
+
+  y <- omit(x, "")
+  expect_identical(y, dict(a=1, b=3))
+  y[""] <- "empty"
+  expect_identical(y, make_dict(c("a", "b", ""), list(1, 3, "empty")))
 })
 
 test_that('dollar, bracket and double bracket operators work correctly', {
@@ -68,9 +88,21 @@ test_that('equality works as expected', {
   expect_identical(x == y,
                    c(a=FALSE, b=TRUE, c=FALSE, d=TRUE))
 
+  # NULL values should compare equal
   z <- dict(a=1, b=2, c=NULL, d=NULL, e=10)
   expect_equal(x == z,
-                   c(a=TRUE, b=TRUE, c=FALSE, d=TRUE, e=NA))
+               c(a=TRUE, b=TRUE, c=FALSE, d=TRUE, e=NA))
+
+  # equality between differently-ordered dicts
+  x2 <- dict(b=2, d=NULL, a=1, c=3)
+  expect_equal(x == x2,
+               c(a=TRUE, b=TRUE, c=TRUE, d=TRUE))
+})
+
+test_that('can create dicts with implicit keys', {
+  a <- 1
+  b <- 2
+  expect_identical(dict(a, b), dict(a=a, b=b))
 })
 
 test_that('omit removes keys', {

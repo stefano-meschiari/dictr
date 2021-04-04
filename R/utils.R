@@ -63,8 +63,9 @@ omit <- function(dict, ...) {
 omit.list <- function(dict, ...) {
   keys <- unlist(c(...))
 
-  if (!is.character(keys))
+  if (!is.character(keys)) {
     stop('Only character keys allowed')
+  }
 
   keys <- c(setdiff(keys(dict), keys))
   dict[keys]
@@ -120,11 +121,8 @@ extend.list <- function(x, ...) {
 }
 
 #' @export
-extend.dict <- extend.list
-
-#' @export
 c.dict <- function(...) {
-  extend.dict(...)
+  extend.list(...)
 }
 
 #' @rdname extend

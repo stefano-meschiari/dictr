@@ -13,7 +13,9 @@ mutable(coll)
 \item{coll}{collection to be made immutable}
 }
 \value{
-a copy of the collection, marked as immutable
+A copy of the collection, marked as immutable. If \code{mutable} is
+  called, then a copy of the collection with the immutability flag removed is
+  returned.
 }
 \description{
 Returns a copy of the collection that cannot be modified using the bracket, double bracket

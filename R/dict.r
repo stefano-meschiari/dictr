@@ -62,7 +62,7 @@ dict <- function(...) {
     }
     dots_names <- ifelse(names(dots) == "", as.character(dots), names(dots))
 
-    assert_unique_keys(dots_names)
+    assert_valid_keys(dots_names)
     structure(list(...), names=dots_names)
   }
 
@@ -128,7 +128,11 @@ default <- function(dict) {
 #' @return a new dictionary
 #' @export
 #' @examples
-#' employee <- make_dict(c('name', 'age'), list('John', 60))
+#' # create an employee dict out of keys and values
+#' employee <- make_dict(keys=c('name', 'age'), values=list('John', 60))
+#'
+#' # create a dict by applying a function to the keys
+#' letter_to_LETTER <- make_dict(letters, toupper)
 make_dict <- function(keys, values, default=NULL, strict=FALSE) {
   dict <- if (purrr::is_function(values) || purrr::is_formula(values)) {
     fn <- purrr::as_mapper(values)
@@ -136,23 +140,13 @@ make_dict <- function(keys, values, default=NULL, strict=FALSE) {
   } else {
     as_dict(purrr::set_names(values, keys))
   }
-
-  attr(dict, 'default') <- default
-  if (strict)
+  if (!is.null(default)) {
+    attr(dict, 'default') <- default
+  }
+  if (strict) {
     attr(dict, 'strict') <- TRUE
+  }
   dict
-}
-
-#' Get the length of the dictionary
-#'
-#' Returns the number of unique keys in the dictionary.
-#'
-#' @param x a dictionary object
-#'
-#' @return the number of unique keys stored in the dictionary.
-#' @export
-length.dict <- function(x) {
-  length(keys(x))
 }
 
 #' Tests whether the object is a dictionary.
@@ -164,6 +158,20 @@ is_dict <- function(obj) {
   inherits(obj, 'dict') && is.list(obj)
 }
 
+is_dict_like <- function(obj) {
+  names <- names(obj)
+
+  is.list(obj) &&
+    !is.null(names) &&
+    !any(is.na(names) &&
+    length(unique(names)) == length(names))
+}
+
+is_entry <- function(obj) {
+  all(c("key", "value") %in% names(obj)) &&
+    is.character(obj[["key"]])
+}
+
 #' Coerces an object to a dictionary
 #'
 #' Coerces a named list, a vector, or a list of \link{entry} tuple, to a dictionary.
@@ -173,16 +181,15 @@ is_dict <- function(obj) {
 #'
 #' @export
 as_dict <- function(obj) {
-  if (is_dict(obj))
+  if (is_dict(obj)) {
     return(obj)
+  }
   if (length(obj) == 0) {
     return(structure(list(), class=c('dict', 'list')))
   }
 
-  is_entry <- function(x) {
-    all(c("key", "value") %in% names(x)) &&
-      is.character(x[["key"]])
-  }
+  names <- names(obj)
+  obj <- as.list(obj)
 
   # obj is a list of entry() objects
   is_list_of_entries <- is.list(obj) &&
@@ -192,19 +199,12 @@ as_dict <- function(obj) {
     names <- purrr::map_chr(obj, 'key')
     values <- purrr::map(obj, 'value')
     obj <- purrr::set_names(values, names)
-  } else if (is_entry(obj)) {
-    obj <- purrr::set_names(obj$value, obj$key)
   }
 
-  obj <- as.list(obj)
+  # check that keys exist and are unique
+  assert_valid_keys(names)
 
-  if (length(obj) > 0 &&
-        is.null(names(obj)) ||
-        length(unique(names(obj))) != length(obj)) {
-    stop("Cannot coerce this object to a dictionary; not enough unique keys")
-  }
-
-  structure(obj[names(obj)], class=c('dict', 'list'))
+  structure(obj, class=c('dict', 'list'))
 }
 
 #' @export
@@ -233,7 +233,8 @@ defaults.list <- function(x, defaults) {
   x
 }
 
-#' Returns or assigns the keys of the provided dictionary.
+#' Returns or assigns the keys of the provided dictionary, that ensures keys
+#' are always unique.
 #'
 #' @param dict a dictionary
 #' @param value new keys to assign
@@ -262,7 +263,12 @@ keys.dict <- keys.list
 }
 
 #' @export
-`keys<-.dict` <- `keys<-.list`
+`names<-.dict` <- function(x, value) {
+  assert_keys_and_values_same_length(value, x)
+  assert_valid_keys(value)
+  attr(x, 'names') <- value
+  x
+}
 
 #' Returns or assigns the values of the provided dictionary.
 #'
@@ -271,6 +277,10 @@ keys.dict <- keys.list
 #' @return a list containing the values of the dictionary, or the updated
 #'   dictionary
 #' @export
+#' @examples
+#' map <- dict(a=1, b=2)
+#'
+#' values(map) <- list("A", "B") # now map == dict(a="A", b="B")
 values <- function(dict) {
   UseMethod('values', dict)
 }
@@ -282,8 +292,8 @@ values.list <- function(dict) {
 
 #' @rdname values
 #' @export
-`values<-` <- function(dict, value) {
-  make_dict(keys(dict), value)
+`values<-` <- function(dict, values) {
+  make_dict(keys(dict), values)
 }
 
 #' Converts a dictionary to a list of key/value pairs
@@ -301,27 +311,27 @@ values.list <- function(dict) {
 #' @export
 #' @examples
 #' library(purrr)
-#' solar_system <- dict(Mercury = 0.387, Venus = 0.723, Earth = 1, Mars = 1.524)
+#' solar_system <- dict(Mercury = 0.387, Venus = 0.723, Earth = 1, Mars = 1.524,
+#'   Jupiter=5.20, Saturn=9.58, Uranus=19.2, Neptune=30.1)
 #' for (e in entries(solar_system))
 #'    cat('The distance between planet', e$key, ' and the Sun is', e$value, ' AU.\n')
 #'
+#' # filter to only planets
 #' inner_solar_system <- entries(solar_system) %>%
 #'              keep(function(e) e$value <= solar_system$Mars) %>%
 #'              as_dict()
 #'
+#' # alternative using keep_dict
+#' outer_solar_system <- keep_dict(solar_system,
+#'                                 function(key, value) value > solar_system$Mars)
+#'
+#' # get all values of the dictionary
 #' semi_major_axes <- purrr::map_dbl(entries(solar_system), "value")
 entries <- function(dict) {
   structure(purrr::map2(keys(dict), values(dict), entry),
             class=c('entries', 'list'))
 }
 
-#' @export
-`names<-.dict` <- function(x, value) {
-  assert_keys_and_values_same_length(value, x)
-  assert_unique_keys(value)
-  attr(x, 'names') <- value
-  x
-}
 
 #' Returns a list with elements \code{key} and \code{value}.
 #' @param key the key
@@ -335,15 +345,11 @@ entry <- function(key, value) {
 purrr::`%||%`
 
 print_kv <- function(key, value, key_width=NULL, ...) {
-
   screen_width <- getOption('width')
   tc <- textConnection('printentry', 'w')
   on.exit({ options(width=screen_width); close(tc) })
 
-  key_width <- 2 + key_width %||% stringr::str_length(key)
-  if (is.na(key)) {
-    key <- '<NA>'
-  }
+  key_width <- 3 + key_width %||% stringr::str_length(key)
 
   key <- stringr::str_c('$ ', as.character(key))
   padded_key <- stringr::str_pad(stringr::str_trunc(key, key_width), key_width)
@@ -378,10 +384,19 @@ print.dict <- function(x, ...) {
     return()
   }
 
+  keys_to_print <- map_dict(x, function(k, v) {
+    if (k == "") {
+      '""'
+    } else {
+      k
+    }
+  })
+
   n <- 1
-  key_width <- min(30, max(stringr::str_length(keys(x)), na.rm=TRUE))
+  key_width <- min(30, max(stringr::str_length(values(keys_to_print)), na.rm=TRUE))
+
   for (key in keys(x)) {
-    print_kv(key, x[[key]], key_width=key_width, ...)
+    print_kv(keys_to_print[[key]], x[[key]], key_width=key_width, ...)
     n <- n+1
     if (n > getOption('max.print')) {
       cat(sprintf('[ reached getOption("max.print") -- omitted %d entries. ]', length(x)-n))

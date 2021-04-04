@@ -23,13 +23,20 @@ dictionary using \code{for} or one of the \code{purrr::map} functions.
 }
 \examples{
 library(purrr)
-solar_system <- dict(Mercury = 0.387, Venus = 0.723, Earth = 1, Mars = 1.524)
+solar_system <- dict(Mercury = 0.387, Venus = 0.723, Earth = 1, Mars = 1.524,
+  Jupiter=5.20, Saturn=9.58, Uranus=19.2, Neptune=30.1)
 for (e in entries(solar_system))
    cat('The distance between planet', e$key, ' and the Sun is', e$value, ' AU.\n')
 
+# filter to only planets
 inner_solar_system <- entries(solar_system) \%>\%
              keep(function(e) e$value <= solar_system$Mars) \%>\%
              as_dict()
 
+# alternative using keep_dict
+outer_solar_system <- keep_dict(solar_system,
+                                function(key, value) value > solar_system$Mars)
+
+# get all values of the dictionary
 semi_major_axes <- purrr::map_dbl(entries(solar_system), "value")
 }

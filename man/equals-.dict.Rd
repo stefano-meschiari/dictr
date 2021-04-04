@@ -2,7 +2,7 @@
 % Please edit documentation in R/operators.R
 \name{==.dict}
 \alias{==.dict}
-\title{Checks whether two dictionary contain the same values}
+\title{Compare dictionary objects}
 \usage{
 \method{==}{dict}(dict, other)
 }
@@ -13,7 +13,11 @@
 }
 \description{
 Returns a logical vector that maps each key to a logical value; the value is TRUE
-if the two dictionaries have identical values for the key (see \link[base]{identical}),
-or FALSE if the values are not identical. If one of the two dictionaries does not
+if the two objects have same values for the key,
+or FALSE if the values are not identical. If one of the two objects does not
 contain the key, the vector will have a value of NA for that key.
+}
+\details{
+To test whether two dictionary objects have the same contents and return
+a single \code{TRUE} or \code{FALSE}, use \link{equal}.
 }

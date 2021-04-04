@@ -3,7 +3,8 @@
 \name{keys}
 \alias{keys}
 \alias{keys<-}
-\title{Returns or assigns the keys of the provided dictionary.}
+\title{Returns or assigns the keys of the provided dictionary, that ensures keys
+are always unique.}
 \usage{
 keys(dict)
 
@@ -18,5 +19,6 @@ keys(dict) <- value
 a character vector containing the keys of the dictionary
 }
 \description{
-Returns or assigns the keys of the provided dictionary.
+Returns or assigns the keys of the provided dictionary, that ensures keys
+are always unique.
 }

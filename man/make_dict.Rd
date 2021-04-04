@@ -24,5 +24,9 @@ a new dictionary
 Create a new dictionary from separate keys and values.
 }
 \examples{
-employee <- make_dict(c('name', 'age'), list('John', 60))
+# create an employee dict out of keys and values
+employee <- make_dict(keys=c('name', 'age'), values=list('John', 60))
+
+# create a dict by applying a function to the keys
+letter_to_LETTER <- make_dict(letters, toupper)
 }

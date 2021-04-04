@@ -12,7 +12,8 @@ vignette: >
 library(dictr)
 library(purrr)
 ```
-`dictr` provides a new data structure specialized for representing dictionaries with string keys. 
+`dictr` provides a new data structure specialized for representing dictionary-like
+data structures, and several functions to transform them.
 
 Install the package using [devtools](https://cran.r-project.org/package=devtools):
 ```{r, eval=FALSE}
@@ -103,17 +104,18 @@ d[c('color', 'pattern')]  # a sub-dictionary with keys color and pattern
 d['color', 'pattern']     # a sub-dictionary with keys color and pattern
 ```
 
-You can get keys and values using the `keys` and `values` functions:
+You can get keys and values using the `keys` and `values` functions (`keys` is
+a synonym for `names`):
 ```{r, eval=FALSE}
 keys(d)      # c('color', 'pattern', 'width')
 values(d)    # list('blue', 'solid', 3)
 ```
 
-You can get a list of "entries" (each element being a tuple with `key` and `value`) 
+You can get a list of entries (each element being a tuple with `key` and `value`) 
 using the `entries` and `entry` functions. This is useful for iteration:
 ```{r, eval=FALSE}
 for (entry in entries(d)) {
-  cat(entry$key, ' = ', entry$value)
+  cat(entry$key, ' = ', entry$value, '\n')
 }
 ```
 
@@ -158,19 +160,23 @@ d <- omit(a, 'a')   # b=NULL, c=3
 ```
 
 ## Utility functions
-A few utility functions inspired by the Underscore library:
+The package implements several functions that can be used to manipulate
+dictionaries and named lists:
 
 - `invert(dict)` returns a dictionary where keys and values are swapped.
-- `has(dict, key)` returns TRUE if `dict` contains `key`.
+- `has(dict, key)` returns TRUE if `dict` contains `key` (equivalent to `key %in% keys(dict)`).
 - `omit(dict, key1, key2, ...)` returns a new dictionary omitting all the specified keys.
 - `extend(dict, dict1, ...)` copies all entries in `dict1` into `dict`, overriding any existing entries and returns a new dictionary.
 - `defaults(dict, defaults)` fill in entries from `defaults` into `dict` for any keys missing in `dict`.
+- `rename_keys(dict, new_key=old_key, ...)` will rename `old_key` to `new_key`
 
 The following functions specialize functions from the `purrr` library to dictionary objects:
 
 - `map_dict(dict, fun, ...)` calls a function on each (key, value) pair and builds a dictionary from the transformed input.
 - `keep_dict(dict, fun)` and `discard_dict(dict, fun)` keep or discard entries based on the function or predicate.
 - `compact_dict(dict)` removes any entries with NULL values.
+
+
 
 ## Default dictionaries
 You can create a dictionary with default values using `default_dict`. Any time a non-existing key is accessed, the default value is returned.
