@@ -193,7 +193,8 @@ attr(salaries, 'default') <- 70000
 ```
 
 ## Strict dictionaries
-You can create a strict dictionary using `strict_dict`. Any time a non-existing key is accessed, an exception is thrown using `stop()`.
+You can create a strict dictionary using `strict_dict`. Any time a non-existing key is accessed, an exception is thrown using `stop()` instead of returning `NULL`.
+
 ```{r}
 # Associating each letter with a number
 letters_to_numbers <- strict_dict(a=1, b=2, c=3, d=4) # etc.

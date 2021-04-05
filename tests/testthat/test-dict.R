@@ -52,6 +52,9 @@ test_that("Empty string is a valid key", {
   expect_identical(y, dict(a=1, b=3))
   y[""] <- "empty"
   expect_identical(y, make_dict(c("a", "b", ""), list(1, 3, "empty")))
+
+  z <- c(dict(a=1), make_dict("", 2))
+  expect_identical(z, make_dict(c("a", ""), list(1, 2)))
 })
 
 test_that('dollar, bracket and double bracket operators work correctly', {
