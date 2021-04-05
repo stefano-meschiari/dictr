@@ -1,5 +1,5 @@
-`dictr` provides a new data structure specialized for representing
-dictionaries with string keys.
+`dictr` provides a new, safer data structure specialized for
+representing dictionaries with string keys.
 
 Install the package using
 [devtools](https://cran.r-project.org/package=devtools):
@@ -19,8 +19,8 @@ library(dictr)
 In R, the typical way to represent dictionaries is to use *named lists*:
 
 ``` r
-my_dict <- list(color='blue', pattern='solid', width=3)
-my_dict$color 
+style <- list(color='blue', pattern='solid', width=3, 'thin')
+style$color 
 ```
 
     ## [1] "blue"
@@ -29,10 +29,13 @@ Unfortunately, named lists have a host of issues when used to represent
 dictionaries: among others…
 
 -   they can mix character and integer keys;
--   they will do *partial matching* by default (`my_dict$co` will also
+-   they will do *partial matching* by default (`style$co` will also
     return `blue`, since it partially matches the key `color`, instead
     of throwing an error or returning NULL);
--   keys can be missing, non-unique, `NA`.
+-   keys can be left unspecified for certain elements (which can only be
+    accessed by index; e.g. you can only access the last element of
+    `style` using `style[[4]]`). Empty strings (`""`) cannot be used as
+    keys.
 
 The new class `dict` can be used to explicitly model a dictionary with
 character keys. `dict`s have a few advantages over named lists:
@@ -41,9 +44,10 @@ character keys. `dict`s have a few advantages over named lists:
 -   Keys are unique and cannot be repeated.
 -   Keys are never partially matched (a key named `test` will not match
     with `t` or `te`).
--   Printing of dicts is more compact.
+-   Printing of dicts is more compact and will use indentation to
+    represent nested dictionaries.
 -   A dict can have default values for non-existing keys.
--   Dicts can contain NULL values.
+-   Dicts can contain NULL values and empty string keys.
 
 Unlike other packages, `dict`s are regular value types that use lists
 under the hood.
@@ -79,9 +83,9 @@ Printing looks nice:
 print(d)
 ```
 
-    ##   $ color : [1] "blue"
-    ## $ pattern : [1] "solid"
-    ##   $ width : [1] 3
+    ##    $ color : [1] "blue"
+    ##  $ pattern : [1] "solid"
+    ##    $ width : [1] 3
 
 You can use a shorthand syntax that creates implicit keys based on the
 name of the variables:
@@ -107,11 +111,11 @@ d <- dict(color='blue', pattern='solid', width=3)
 d$color                   # blue
 d[['pattern']]            # solid
 d[c('color', 'pattern')]  # a sub-dictionary with keys color and pattern
-d['color', 'pattern']     # a sub-dictionary with keys color and pattern
+d['color', 'pattern']     # same as above; a sub-dictionary with keys color and pattern
 ```
 
-You can get keys and values using the `keys` and `values` functions
-(`keys` is a synonym for `names`):
+You can get keys and values separately using the `keys` and `values`
+functions (`keys` is a synonym for `names`):
 
 ``` r
 keys(d)      # c('color', 'pattern', 'width')
@@ -140,9 +144,9 @@ d %>%
   as_dict()
 ```
 
-    ## $ a : [1] 1
-    ## $ b : [1] 4
-    ## $ c : [1] 9
+    ##  $ a : [1] 1
+    ##  $ b : [1] 4
+    ##  $ c : [1] 9
 
 For convenience, you can use the `map_dict` function to map over keys
 and values, and the `keep_dict` and `discard_dict` to filter entries.
@@ -169,18 +173,19 @@ d['last', 'title'] <- c('Organa', 'Princess') # first=Leia, last=Organa, title=P
 ```
 
 Setting an entry to `NULL` does *not* delete the entry, but instead sets
-the entry to `NULL`. To delete one or more entries, use the `omit`
+the entry to `NULL`. To delete one or more keys, use the `omit`
 function:
 
 ``` r
 d <- dict(a=1, c=3)
-d$b <- NULL         # a=1, b=NULL, c=3
-d <- omit(a, 'a')   # b=NULL, c=3
+d$b <- NULL         # 'b' is set to NULL; a=1, b=NULL, c=3
+d <- omit(a, 'a')   # 'a' is removed; b=NULL, c=3
 ```
 
 ## Utility functions
 
-A few utility functions inspired by the Underscore library:
+The package implements several functions that can be used to manipulate
+dictionaries and named lists:
 
 -   `invert(dict)` returns a dictionary where keys and values are
     swapped.
@@ -213,7 +218,7 @@ Any time a non-existing key is accessed, the default value is returned.
 ``` r
 salaries <- default_dict(employee_a = 50000,
                          employee_b = 100000,
-                         default = 65000)
+                         .default = 65000)
 ```
 
 You can provide a default value for an existing dictionary by setting
